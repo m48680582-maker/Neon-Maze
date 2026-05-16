@@ -1,0 +1,4370 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIST OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0d0d10;
+            --surface: #131318;
+            --surface2: #18181f;
+            --surface3: #1e1e28;
+            --accent: #00d4ff;
+            --accent2: #6d56e8;
+            --accent3: #22c55e;
+            --red: #f04444;
+            --yellow: #f5a623;
+            --text: #ededf0;
+            --text-dim: #5c6370;
+            --text-muted: #2e3340;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.11);
+            --glow: none;
+            --glow2: none;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-ui: 'Rajdhani', sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-ui);
+            background: var(--bg);
+            color: var(--text);
+            user-select: none;
+        }
+
+        #desktop {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        #desktop-bg {
+            position: absolute;
+            inset: 0;
+        }
+
+        #grid-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+        }
+
+        #scan-line {
+            display: none;
+        }
+
+        #icon-grid {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 80px);
+            gap: 10px;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 80px;
+            transition: background 0.15s;
+        }
+
+            .desktop-icon:hover {
+                background: rgba(255,255,255,0.05);
+            }
+
+            .desktop-icon:active {
+                background: rgba(255,255,255,0.09);
+            }
+
+            .desktop-icon .ico {
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 26px;
+                border-radius: 12px;
+                border: 1px solid var(--border);
+                background: var(--surface2);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            }
+
+            .desktop-icon span {
+                font-family: var(--font-ui);
+                font-size: 11px;
+                font-weight: 500;
+                color: var(--text);
+                text-align: center;
+                line-height: 1.3;
+            }
+
+        #taskbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 46px;
+            background: var(--surface2);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        #taskbar-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #app-launcher {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 700;
+            color: #0d0d10;
+            font-family: var(--font-ui);
+            transition: opacity 0.15s;
+        }
+
+            #app-launcher:hover {
+                opacity: 0.8;
+            }
+
+        .tb-divider {
+            width: 1px;
+            height: 26px;
+            background: var(--border2);
+            margin: 0 4px;
+        }
+
+        #taskbar-pins {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding-right: 6px;
+            border-right: 1px solid var(--border2);
+            margin-right: 4px;
+        }
+
+        .tb-pin {
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            background: transparent;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.12s, border-color 0.12s;
+            color: var(--text);
+        }
+
+            .tb-pin:hover {
+                background: var(--surface2);
+                border-color: var(--border);
+            }
+
+        #taskbar-apps {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .tb-app {
+            height: 34px;
+            padding: 0 12px;
+            border-radius: 7px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-family: var(--font-ui);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+            letter-spacing: 0.5px;
+        }
+
+            .tb-app:hover {
+                background: var(--surface3);
+                color: var(--text);
+                border-color: var(--border2);
+            }
+
+            .tb-app.active {
+                background: var(--surface3);
+                color: var(--accent);
+                border-color: rgba(0,212,255,0.4);
+            }
+
+            .tb-app .dot {
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: var(--accent);
+            }
+
+        #taskbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        #sys-tray {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tray-icon {
+            font-size: 14px;
+            opacity: 0.6;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+            .tray-icon:hover {
+                opacity: 1;
+            }
+
+        #clock {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text);
+            letter-spacing: 1px;
+            text-align: right;
+            line-height: 1.4;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            cursor: default;
+        }
+
+            #clock .time {
+                font-weight: 500;
+            }
+
+            #clock .date {
+                font-size: 9px;
+                color: var(--text-dim);
+            }
+
+        .window {
+            position: absolute;
+            min-width: 300px;
+            min-height: 200px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: winOpen 0.18s cubic-bezier(0.34,1.56,0.64,1);
+            transition: box-shadow 0.15s;
+        }
+
+            .window.minimized {
+                display: none !important;
+            }
+
+            .window.focused {
+                border-color: var(--border2);
+                box-shadow: 0 20px 60px rgba(0,0,0,0.75);
+            }
+
+        @keyframes winOpen {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .win-titlebar {
+            height: 38px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            cursor: grab;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+            .win-titlebar:active {
+                cursor: grabbing;
+            }
+
+        .win-controls {
+            display: flex;
+            gap: 7px;
+        }
+
+        .wc-btn {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: filter 0.15s;
+            flex-shrink: 0;
+        }
+
+            .wc-btn:hover {
+                filter: brightness(1.3);
+            }
+
+        .wc-close {
+            background: var(--red);
+        }
+
+        .wc-min {
+            background: var(--yellow);
+        }
+
+        .wc-max {
+            background: var(--accent3);
+        }
+
+        .win-title {
+            flex: 1;
+            font-family: var(--font-ui);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .win-icon {
+            font-size: 14px;
+        }
+
+        .win-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-body {
+            flex: 1;
+            padding: 14px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: #a8b8d8;
+            overflow-y: auto;
+            background: #080c18;
+            line-height: 1.7;
+        }
+
+            .terminal-body::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .terminal-body::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .terminal-body::-webkit-scrollbar-thumb {
+                background: var(--surface3);
+                border-radius: 3px;
+            }
+
+        .term-line {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .term-prompt {
+            color: var(--accent3);
+        }
+
+        .term-user {
+            color: var(--accent);
+        }
+
+        .term-path {
+            color: var(--accent2);
+            font-weight: 500;
+        }
+
+        .term-output {
+            color: #8899b8;
+        }
+
+        .term-error {
+            color: var(--red);
+        }
+
+        .term-highlight {
+            color: var(--accent);
+        }
+
+        .term-success {
+            color: var(--accent3);
+        }
+
+        .term-dim {
+            color: #445577;
+        }
+
+        .term-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 8px 14px;
+            border-top: 1px solid var(--border);
+            background: #080c18;
+            flex-shrink: 0;
+        }
+
+        .term-input-prompt {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--accent3);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .term-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text);
+            caret-color: var(--accent);
+            padding: 0 6px;
+        }
+
+        .editor-toolbar {
+            padding: 6px 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+            align-items: center;
+        }
+
+        .editor-filename {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            flex: 1;
+        }
+
+        .editor-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .editor-gutter {
+            width: 46px;
+            background: #080c18;
+            border-right: 1px solid var(--border);
+            padding: 14px 0;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+            overflow: hidden;
+            flex-shrink: 0;
+            line-height: 1.7;
+        }
+
+            .editor-gutter span {
+                display: block;
+                padding-right: 10px;
+            }
+
+        .editor-textarea {
+            flex: 1;
+            background: #080c18;
+            border: none;
+            outline: none;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: #c8d8f0;
+            padding: 14px;
+            line-height: 1.7;
+            resize: none;
+            caret-color: var(--accent);
+        }
+
+        .editor-statusbar {
+            padding: 4px 14px;
+            border-top: 1px solid var(--border);
+            background: var(--surface3);
+            font-size: 10px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 16px;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+            font-family: var(--font-ui);
+            font-weight: 600;
+        }
+
+        .fm-btn {
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-family: var(--font-ui);
+            font-weight: 600;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.15s;
+        }
+
+            .fm-btn:hover {
+                border-color: var(--border2);
+                color: var(--text);
+            }
+
+        .fm-sidebar-section {
+            padding: 4px 12px 2px;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .fm-sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.12s;
+            letter-spacing: 0.3px;
+        }
+
+            .fm-sidebar-item:hover {
+                background: rgba(255,255,255,0.04);
+                color: var(--text);
+            }
+
+            .fm-sidebar-item.active {
+                background: rgba(255,255,255,0.07);
+                color: var(--accent);
+            }
+
+        #ctx-menu {
+            position: fixed;
+            display: none;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+            z-index: 9000;
+            min-width: 190px;
+            animation: ctxIn 0.12s ease;
+        }
+
+        @keyframes ctxIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .ctx-item {
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.1s;
+        }
+
+            .ctx-item:hover {
+                background: rgba(255,255,255,0.06);
+                color: var(--text);
+            }
+
+        .ctx-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        .ctx-ico {
+            width: 16px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface3);
+            border-radius: 3px;
+        }
+
+        #boot-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        #boot-logo {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+            line-height: 1.3;
+            text-align: center;
+            white-space: pre;
+            animation: pulse 1s ease infinite alternate;
+        }
+
+        @keyframes pulse {
+            from {
+                opacity: 0.7;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        #boot-bar-wrap {
+            width: 300px;
+            height: 3px;
+            background: #111;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #boot-bar {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            background: var(--accent);
+            transition: width 0.05s linear;
+        }
+
+        #boot-status {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        #notif-stack {
+            position: fixed;
+            bottom: 56px;
+            right: 16px;
+            z-index: 8000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .notif {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 10px 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            font-size: 12px;
+            color: var(--text);
+            max-width: 280px;
+            animation: notifIn 0.2s ease;
+            cursor: pointer;
+        }
+
+        @keyframes notifIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notif-title {
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .notif-body {
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            cursor: se-resize;
+            z-index: 10;
+        }
+
+            .resize-handle::after {
+                content: '';
+                position: absolute;
+                bottom: 4px;
+                right: 4px;
+                width: 8px;
+                height: 8px;
+                border-right: 2px solid var(--border2);
+                border-bottom: 2px solid var(--border2);
+            }
+
+        .window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100% - 46px) !important;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+            border-top: none;
+        }
+
+        body.any-maximized .window.maximized {
+            height: 100% !important;
+        }
+
+        body.any-maximized #taskbar {
+            display: none !important;
+        }
+
+        body.any-maximized #icon-grid {
+            display: none !important;
+        }
+
+        /* come on frank this is what they want */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .game-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 12px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            text-align: center;
+        }
+
+            .game-card:hover {
+                border-color: var(--border2);
+                background: var(--surface3);
+                transform: translateY(-2px);
+            }
+
+            .game-card:active {
+                transform: translateY(0);
+            }
+
+        .game-card-emoji {
+            font-size: 36px;
+            line-height: 1;
+        }
+
+        .game-card-name {
+            font-family: var(--font-ui);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.4px;
+            line-height: 1.3;
+        }
+
+        .game-card-tag {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 20px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+            .game-card-tag.xframe {
+                background: rgba(124,58,237,0.18);
+                color: var(--accent2);
+                border: 1px solid rgba(124,58,237,0.35);
+            }
+
+            .game-card-tag.direct {
+                background: rgba(16,185,129,0.12);
+                color: var(--accent3);
+                border: 1px solid rgba(16,185,129,0.3);
+            }
+
+        .games-search-bar {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .games-search-input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+            .games-search-input:focus {
+                border-color: var(--accent);
+            }
+
+        .games-header {
+            padding: 14px 20px 0;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        /* NOBODY USES THIS */
+        .settings-input {
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.15s;
+            width: 180px;
+        }
+
+            .settings-input:focus {
+                border-color: var(--accent);
+            }
+
+        .settings-save-btn {
+            padding: 5px 14px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-family: var(--font-ui);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: opacity 0.15s;
+        }
+
+            .settings-save-btn:hover {
+                opacity: 0.85;
+            }
+
+        #start-menu {
+            position: fixed;
+            bottom: 54px;
+            left: 8px;
+            width: 320px;
+            background: rgba(10,14,26,0.97);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            box-shadow: 0 -8px 60px rgba(0,0,0,0.8), var(--glow2);
+            z-index: 5000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: ctxIn 0.15s ease;
+            backdrop-filter: blur(24px);
+        }
+
+            #start-menu.open {
+                display: flex;
+            }
+
+        .sm-search {
+            margin: 14px 14px 8px;
+            padding: 8px 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+            .sm-search:focus {
+                border-color: var(--accent);
+            }
+
+        .sm-section {
+            padding: 6px 16px 3px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .sm-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 4px 10px 10px;
+        }
+
+        .sm-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 4px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+
+            .sm-app:hover {
+                background: rgba(0,212,255,0.1);
+            }
+
+            .sm-app .sm-ico {
+                font-size: 24px;
+            }
+
+            .sm-app .sm-lbl {
+                font-size: 9px;
+                font-weight: 600;
+                color: var(--text-dim);
+                text-align: center;
+                letter-spacing: 0.3px;
+                line-height: 1.2;
+            }
+
+        .sm-footer {
+            border-top: 1px solid var(--border);
+            padding: 8px 14px;
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .sm-foot-btn {
+            padding: 5px 12px;
+            border-radius: 7px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: var(--font-ui);
+            letter-spacing: 0.8px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+
+            .sm-foot-btn:hover {
+                border-color: var(--border2);
+                color: var(--text);
+            }
+
+            .sm-foot-btn.red:hover {
+                border-color: var(--red);
+                color: var(--red);
+            }
+
+        #tut-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 90000;
+            pointer-events: none;
+        }
+
+        #tut-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            transition: opacity 0.3s;
+        }
+
+        #tut-spotlight {
+            position: absolute;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.55), 0 0 0 2px var(--accent), 0 0 30px rgba(0,212,255,0.4);
+            transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+            pointer-events: none;
+        }
+
+        #tut-card {
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            padding: 18px 20px 14px;
+            width: 290px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7), var(--glow);
+            pointer-events: all;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        #tut-step-badge {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--accent);
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+
+        #tut-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        #tut-body {
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.75;
+            font-family: var(--font-mono);
+            margin-bottom: 14px;
+        }
+
+            #tut-body b {
+                color: var(--accent);
+                font-weight: 500;
+            }
+
+        .tut-btns {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .tut-skip {
+            font-size: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-mono);
+            letter-spacing: 0.5px;
+            transition: color 0.15s;
+            margin-right: auto;
+        }
+
+            .tut-skip:hover {
+                color: var(--red);
+            }
+
+        .tut-nav {
+            padding: 5px 14px;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font-ui);
+            letter-spacing: 0.8px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+
+            .tut-nav:hover {
+                border-color: var(--border2);
+                color: var(--text);
+            }
+
+            .tut-nav.primary {
+                background: linear-gradient(135deg, var(--accent2), var(--accent));
+                border-color: transparent;
+                color: white;
+            }
+
+                .tut-nav.primary:hover {
+                    opacity: 0.88;
+                }
+
+        #tut-progress {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .tut-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--border2);
+            transition: all 0.2s;
+        }
+
+            .tut-dot.active {
+                background: var(--accent);
+                width: 14px;
+                border-radius: 3px;
+            }
+
+        /* this too i guess */
+        .browser-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            flex-shrink: 0;
+        }
+
+        .browser-nav-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+            .browser-nav-btn:hover {
+                border-color: var(--border2);
+                color: var(--text);
+            }
+
+        .browser-addressbar {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+            .browser-addressbar:focus {
+                border-color: var(--accent);
+            }
+
+        .browser-go-btn {
+            padding: 5px 14px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-family: var(--font-ui);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: opacity 0.15s;
+            flex-shrink: 0;
+        }
+
+            .browser-go-btn:hover {
+                opacity: 0.85;
+            }
+
+        .browser-statusbar {
+            padding: 3px 12px;
+            border-top: 1px solid var(--border);
+            background: var(--surface2);
+            font-size: 10px;
+            color: var(--text-dim);
+            flex-shrink: 0;
+            font-family: var(--font-mono);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .browser-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent3);
+            flex-shrink: 0;
+            box-shadow: 0 0 6px var(--accent3);
+        }
+
+            .browser-status-dot.loading {
+                background: var(--yellow);
+                box-shadow: 0 0 6px var(--yellow);
+            }
+
+            .browser-status-dot.error {
+                background: var(--red);
+                box-shadow: 0 0 6px var(--red);
+            }
+
+        .browser-frame-wrap {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: #fff;
+        }
+
+        .browser-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .browser-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            background: var(--surface);
+            font-family: var(--font-mono);
+        }
+
+            .browser-overlay .big-icon {
+                font-size: 44px;
+            }
+
+            .browser-overlay .msg {
+                font-size: 12px;
+                color: var(--text-dim);
+                text-align: center;
+                line-height: 1.9;
+            }
+
+        .browser-cfg {
+            padding: 5px 12px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+            .browser-cfg input {
+                flex: 1;
+                background: transparent;
+                border: none;
+                outline: none;
+                font-family: var(--font-mono);
+                font-size: 10px;
+                color: var(--text-dim);
+            }
+
+        .browser-cfg-label {
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        #setup-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+        }
+
+        #setup-box {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 16px;
+            box-shadow: 0 32px 100px rgba(0,0,0,0.9), 0 0 60px rgba(0,212,255,0.08);
+            width: 420px;
+            padding: 36px 36px 30px;
+            animation: winOpen 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        #setup-logo {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--accent);
+            white-space: pre;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            text-align: center;
+            opacity: 0.85;
+        }
+
+        .setup-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .setup-sub {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+            margin-bottom: 28px;
+        }
+
+        .setup-field {
+            margin-bottom: 18px;
+        }
+
+        .setup-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .setup-label-tag {
+            font-size: 8px;
+            padding: 1px 5px;
+            border-radius: 10px;
+            background: rgba(0,212,255,0.1);
+            color: var(--accent);
+            border: 1px solid rgba(0,212,255,0.25);
+            letter-spacing: 0.5px;
+        }
+
+        .setup-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            box-sizing: border-box;
+        }
+
+            .setup-input:focus {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(0,212,255,0.08);
+            }
+
+            .setup-input::placeholder {
+                color: var(--text-muted);
+            }
+
+        .setup-hint {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .setup-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 24px 0;
+        }
+
+        #setup-submit {
+            width: 100%;
+            padding: 11px;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-family: var(--font-ui);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            transition: opacity 0.15s, transform 0.1s;
+            box-shadow: 0 0 20px rgba(0,212,255,0.2);
+        }
+
+            #setup-submit:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+
+            #setup-submit:active {
+                transform: translateY(0);
+            }
+
+        #setup-preview {
+            margin-top: 10px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            text-align: center;
+            min-height: 14px;
+        }
+
+        #tut-hint-arrow {
+            position: fixed;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            z-index: 9500;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.4s;
+        }
+
+        #tut-hint-label {
+            font-family: var(--font-ui);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0,212,255,0.6);
+            white-space: nowrap;
+        }
+
+        #tut-hint-chevron {
+            font-size: 22px;
+            color: var(--accent);
+            text-shadow: 0 0 12px rgba(0,212,255,0.7);
+            animation: tutHintBounce 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes tutHintBounce {
+            from {
+                transform: translateY(4px);
+            }
+
+            to {
+                transform: translateY(-4px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <iframe id="cloak-iframe" src="https://google.com"
+            style="display:none;position:fixed;inset:0;width:100%;height:100%;border:none;z-index:-1;"
+            tabindex="-1"></iframe>
+
+    <div id="setup-overlay">
+        <div id="setup-box">
+            <div id="setup-logo">
+                ███╗   ███╗██╗███████╗████████╗    ██████╗ ███████╗
+                ████╗ ████║██║██╔════╝╚══██╔══╝   ██╔═══██╗██╔════╝
+                ██╔████╔██║██║███████╗   ██║      ██║   ██║███████╗
+                ██║╚██╔╝██║██║╚════██║   ██║      ██║   ██║╚════██║
+                ██║ ╚═╝ ██║██║███████║   ██║      ╚██████╔╝███████║
+                ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝       ╚═════╝ ╚══════╝
+            </div>
+
+            <div class="setup-title">Cloak setup</div>
+            <div class="setup-sub">Configure your session before launching MIST OS</div>
+
+            <div class="setup-field">
+                <div class="setup-label">
+                    🔗 Cloak URL
+                    <span class="setup-label-tag">TAB DISGUISE</span>
+                </div>
+                <input class="setup-input" id="setup-url" type="text"
+                       placeholder="google.com" autocomplete="off" spellcheck="false"
+                       oninput="updateSetupPreview()">
+                <div class="setup-hint">The site your tab will appear to load. Leave blank for google.com</div>
+            </div>
+
+            <div class="setup-field">
+                <div class="setup-label">
+                    🏷️ Cloak Name
+                    <span class="setup-label-tag">TAB TITLE</span>
+                </div>
+                <input class="setup-input" id="setup-name" type="text"
+                       placeholder="Google" autocomplete="off" spellcheck="false"
+                       oninput="updateSetupPreview()">
+                <div class="setup-hint">What the browser tab will be titled</div>
+            </div>
+
+            <div class="setup-divider"></div>
+
+            <button id="setup-submit" onclick="finishSetup()">LAUNCH MIST OS</button>
+            <div id="setup-preview"></div>
+        </div>
+    </div>
+
+    <div id="boot-screen">
+        <div id="boot-logo">
+            ███╗   ███╗██╗███████╗████████╗     ██████╗ ███████╗
+            ████╗ ████║██║██╔════╝╚══██╔══╝    ██╔═══██╗██╔════╝
+            ██╔████╔██║██║███████╗   ██║       ██║   ██║███████╗
+            ██║╚██╔╝██║██║╚════██║   ██║       ██║   ██║╚════██║
+            ██║ ╚═╝ ██║██║███████║   ██║       ╚██████╔╝███████║
+            ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝        ╚═════╝ ╚══════╝
+
+            MIST OS v1.0.0  ·  Kernel 6.8.1-mist
+        </div>
+        <div id="boot-bar-wrap"><div id="boot-bar"></div></div>
+        <div id="boot-status">Initializing kernel modules...</div>
+    </div>
+
+    <div id="desktop">
+        <div id="desktop-bg"></div>
+        <div id="grid-overlay"></div>
+        <div id="scan-line"></div>
+
+        <div id="icon-grid">
+            <div class="desktop-icon" ondblclick="openApp('terminal')">
+                <div class="ico">🖥️</div>
+                <span>Terminal</span>
+            </div>
+            <div class="desktop-icon" ondblclick="openApp('suggestions')">
+                <div class="ico">💡</div>
+                <span>Suggestions</span>
+            </div>
+            <div class="desktop-icon" ondblclick="openApp('editor')">
+                <div class="ico">📝</div>
+                <span>Text Editor</span>
+            </div>
+            <div class="desktop-icon" ondblclick="openApp('chat')">
+                <div class="ico">💬</div>
+                <span>Chat</span>
+            </div>
+            <div class="desktop-icon" ondblclick="openApp('sort')">
+                <div class="ico">📊</div>
+                <span>Sort</span>
+            </div>
+            <div class="desktop-icon" ondblclick="openApp('share')">
+                <div class="ico">🔗</div>
+                <span>Share</span>
+            </div>
+            <div class="desktop-icon" ondblclick="openApp('games')">
+                <div class="ico">🎮</div>
+                <span>Games</span>
+            </div>
+            <div class="desktop-icon" ondblclick="openApp('browser')">
+                <div class="ico">🌐</div>
+                <span>dogeub browser</span>
+            </div>
+            <!--yes,there is no settings icon. Leave it like that,future editor. Im too lazy to remove the code.-->
+            <div class="desktop-icon" id="tutorial-icon" ondblclick="startTutorial()">
+                <div class="ico">📖</div>
+                <span>Tutorial</span>
+            </div>
+        </div>
+
+        <!-- ditched -->
+        <div id="tut-hint-arrow">
+            <div id="tut-hint-chevron"></div>
+            <div id="tut-hint-label"></div>
+        </div>
+
+        <div id="taskbar">
+            <div id="taskbar-left">
+                <button id="app-launcher" title="MIST OS">M</button>
+                <div class="tb-divider"></div>
+            </div>
+            <div id="taskbar-pins">
+                <button class="tb-pin" title="Terminal" onclick="openApp('terminal')">🖥️</button>
+                <button class="tb-pin" title="Suggestions" onclick="openApp('suggestions')">💡</button>
+                <button class="tb-pin" title="dogeub browser" onclick="openApp('browser')">🌐</button>
+                <button class="tb-pin" title="Games" onclick="openApp('games')">🎮</button>
+            </div>
+            <div id="taskbar-apps"></div>
+            <div id="taskbar-right">
+                <div id="sys-tray">
+                    <span class="tray-icon" title="Network">📶</span>
+                    <span class="tray-icon" title="Volume">🔊</span>
+                    <span class="tray-icon" title="Battery">🔋</span>
+                </div>
+                <div id="clock">
+                    <div class="time" id="clk-time"></div>
+                    <div class="date" id="clk-date"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="start-menu">
+        <input class="sm-search" id="sm-search-inp" placeholder="🔍  Search apps..." oninput="smFilter(this.value)" autocomplete="off">
+        <div class="sm-section">APPLICATIONS</div>
+        <div class="sm-grid" id="sm-grid"></div>
+        <div class="sm-footer">
+            <button class="sm-foot-btn" onclick="startTutorial();closeStartMenu()">📖 Help</button>
+            <button class="sm-foot-btn" onclick="openApp('settings');closeStartMenu()">⚙️ Settings</button>
+            <button class="sm-foot-btn red" onclick="location.reload()">⏻ Restart</button>
+        </div>
+    </div>
+
+    <div id="tut-overlay" style="display:none">
+        <div id="tut-spotlight"></div>
+        <div id="tut-card">
+            <div id="tut-step-badge">STEP 1 / 12</div>
+            <div id="tut-title">Welcome to MIST OS</div>
+            <div id="tut-body"></div>
+            <div class="tut-btns">
+                <span class="tut-skip" onclick="endTutorial()">Skip tutorial</span>
+                <button class="tut-nav" id="tut-prev-btn" onclick="tutStep(-1)">← Back</button>
+                <button class="tut-nav primary" id="tut-next-btn" onclick="tutStep(1)">Next →</button>
+            </div>
+            <div id="tut-progress"></div>
+        </div>
+    </div>
+
+    <div id="ctx-menu">
+        <div class="ctx-item" onclick="openApp('games');closeCtx()"><span class="ctx-ico">🎮</span>Games</div>
+        <div class="ctx-item" onclick="openApp('browser');closeCtx()"><span class="ctx-ico">🌐</span>dogeub Browser</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" onclick="openApp('terminal');closeCtx()"><span class="ctx-ico">🖥️</span>Open Terminal</div>
+        <div class="ctx-item" onclick="openApp('suggestions');closeCtx()"><span class="ctx-ico">💡</span>Suggestions</div>
+        <div class="ctx-item" onclick="openApp('editor');closeCtx()"><span class="ctx-ico">📝</span>New Text File</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" onclick="startTutorial();closeCtx()"><span class="ctx-ico">📖</span>Tutorial</div>
+        <div class="ctx-item" onclick="showNotif('Desktop','Desktop refreshed.');closeCtx()"><span class="ctx-ico">🔄</span>Refresh Desktop</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" onclick="openApp('settings');closeCtx()"><span class="ctx-ico">⚙️</span>System Settings</div>
+    </div>
+
+    <div id="notif-stack"></div>
+
+    <script>
+        function normalizeUrl(raw) {
+            raw = raw.trim();
+            if (!raw) return 'https://google.com';
+            if (/^https?:\/\//i.test(raw)) return raw;
+            return 'https://' + raw;
+        }
+
+        function updateSetupPreview() {
+            const urlVal = document.getElementById('setup-url').value.trim();
+            const nameVal = document.getElementById('setup-name').value.trim();
+            const prev = document.getElementById('setup-preview');
+            const url = urlVal ? normalizeUrl(urlVal) : 'https://google.com';
+            const name = nameVal ? nameVal : 'Google';
+            prev.textContent = `Tab: "${name}"  ·  Iframe: ${url}`;
+        }
+
+        function applyCloak(url, name) {
+            document.title = name || 'Google';
+            const iframe = document.getElementById('cloak-iframe');
+            if (iframe) iframe.src = url || 'https://google.com';
+        }
+
+        function finishSetup() {
+            const urlRaw = document.getElementById('setup-url').value.trim();
+            const nameRaw = document.getElementById('setup-name').value.trim();
+            const url = normalizeUrl(urlRaw);
+            const name = nameRaw || 'Google';
+            applyCloak(url, name);
+
+            const overlay = document.getElementById('setup-overlay');
+            overlay.style.transition = 'opacity 0.4s';
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.remove();
+                setTimeout(bootStep, 500);
+            }, 400);
+        }
+
+        function redoSetup() {
+            const overlay = document.createElement('div');
+            overlay.id = 'setup-overlay';
+            overlay.innerHTML = `
+                                                    <div id="setup-box">
+                                                      <div id="setup-logo">
+███╗   ███╗██╗███████╗████████╗    ██████╗ ███████╗
+████╗ ████║██║██╔════╝╚══██╔══╝   ██╔═══██╗██╔════╝
+██╔████╔██║██║███████╗   ██║      ██║   ██║███████╗
+██║╚██╔╝██║██║╚════██║   ██║      ██║   ██║╚════██║
+██║ ╚═╝ ██║██║███████║   ██║      ╚██████╔╝███████║
+╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝       ╚═════╝ ╚══════╝</div>
+                                                      <div class="setup-title">RECONFIGURE CLOAK</div>
+                                                      <div class="setup-sub">Update your session cloak settings</div>
+                                                      <div class="setup-field">
+                                                        <div class="setup-label">🔗 Cloak URL <span class="setup-label-tag">TAB DISGUISE</span></div>
+                                                        <input class="setup-input" id="setup-url" type="text"
+                                                          placeholder="google.com" autocomplete="off" spellcheck="false"
+                                                          oninput="updateSetupPreview()">
+                                                        <div class="setup-hint">Leave blank for google.com</div>
+                                                      </div>
+                                                      <div class="setup-field">
+                                                        <div class="setup-label">🏷️ Cloak Name <span class="setup-label-tag">TAB TITLE</span></div>
+                                                        <input class="setup-input" id="setup-name" type="text"
+                                                          placeholder="Google" autocomplete="off" spellcheck="false"
+                                                          oninput="updateSetupPreview()">
+                                                        <div class="setup-hint">What the browser tab will be titled</div>
+                                                      </div>
+                                                      <div class="setup-divider"></div>
+                                                      <button id="setup-submit" onclick="finishRedoSetup()">APPLY CLOAK  →</button>
+                                                      <div id="setup-preview"></div>
+                                                    </div>
+                                                  `;
+            document.body.appendChild(overlay);
+        }
+
+        function finishRedoSetup() {
+            const urlRaw = document.getElementById('setup-url').value.trim();
+            const nameRaw = document.getElementById('setup-name').value.trim();
+            const url = normalizeUrl(urlRaw);
+            const name = nameRaw || 'Google';
+            applyCloak(url, name);
+            showNotif('Cloak', `Tab cloaked as "${name}" → ${url}`);
+            const overlay = document.getElementById('setup-overlay');
+            if (overlay) {
+                overlay.style.transition = 'opacity 0.3s';
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 300);
+            }
+        }
+
+        let currentUsername = 'user';
+        let zCounter = 100;
+        const windows = {};
+        let activeWin = null;
+
+        // receive username injected by index.html
+        window.addEventListener('message', function (ev) {
+            if (ev.data && ev.data.type === 'MIST_USERNAME' && ev.data.username) {
+                setUsername(ev.data.username);
+            }
+        });
+
+        function getUsername() { return currentUsername; }
+        function setUsername(name) {
+            if (!name || !name.trim()) return false;
+            const clean = name.trim().replace(/[^a-zA-Z0-9_\-]/g, '').toLowerCase();
+            if (!clean) return false;
+            currentUsername = clean;
+            document.querySelectorAll('[id^="term-prompt-"]').forEach(el => {
+                const id = el.id.replace('term-prompt-', '');
+                updatePrompt(id);
+            });
+            return clean;
+        }
+
+        const gameWindows = new Set();
+        let _gameKeyBlocker = null;
+        let _lockPaused = false;
+
+        function _attachBlocker() {
+            if (!_gameKeyBlocker) return;
+            document.addEventListener('keydown', _gameKeyBlocker, true);
+            document.addEventListener('keyup', _gameKeyBlocker, true);
+            document.addEventListener('keypress', _gameKeyBlocker, true);
+        }
+        function _detachBlocker() {
+            if (!_gameKeyBlocker) return;
+            document.removeEventListener('keydown', _gameKeyBlocker, true);
+            document.removeEventListener('keyup', _gameKeyBlocker, true);
+            document.removeEventListener('keypress', _gameKeyBlocker, true);
+        }
+
+        function enableGameKeyLock(winId) {
+            if (_gameKeyBlocker) return;
+            _gameKeyBlocker = e => { e.stopImmediatePropagation(); e.preventDefault(); };
+            _lockPaused = false;
+            _attachBlocker();
+            _setKeyBadge(winId, true);
+        }
+
+        function disableGameKeyLock(winId) {
+            if (!_gameKeyBlocker) return;
+            _detachBlocker();
+            _gameKeyBlocker = null;
+            _lockPaused = false;
+            if (winId) _setKeyBadge(winId, false);
+        }
+
+        function _setKeyBadge(winId, locked) {
+            const b = document.getElementById('keylock-badge-' + winId);
+            if (!b) return;
+            if (locked) {
+                b.textContent = '⌨ KEYBOARD LOCKED';
+                b.style.color = 'var(--accent3)';
+                b.style.opacity = '1';
+            } else {
+                b.textContent = '⌨ KEYBOARD FREE';
+                b.style.color = 'var(--text-muted)';
+                b.style.opacity = '0.45';
+            }
+        }
+
+        window.addEventListener('blur', () => {
+            if (_gameKeyBlocker && !_lockPaused) {
+                _detachBlocker();
+                _lockPaused = true;
+                if (activeWin && gameWindows.has(activeWin)) _setKeyBadge(activeWin, false);
+            }
+        });
+        window.addEventListener('focus', () => {
+            if (_gameKeyBlocker && _lockPaused && activeWin && gameWindows.has(activeWin)) {
+                _lockPaused = false;
+                _attachBlocker();
+                _setKeyBadge(activeWin, true);
+            } else if (_lockPaused) {
+                _lockPaused = false;
+                _gameKeyBlocker = null;
+            }
+        });
+
+        function createWindow(id, title, icon, width, height, content) {
+            if (windows[id]) { focusWindow(id); if (windows[id] && windows[id].minimized) restoreWindow(id); return; }
+
+            const count = Object.keys(windows).length;
+            const startX = Math.min(60 + count * 30, window.innerWidth - width - 20);
+            const startY = Math.min(40 + count * 30, window.innerHeight - height - 60);
+
+            const win = document.createElement('div');
+            win.className = 'window focused';
+            win.id = 'win-' + id;
+            win.style.cssText = `left:${startX}px;top:${startY}px;width:${width}px;height:${height}px;z-index:${++zCounter}`;
+
+            win.innerHTML = `
+                                                    <div class="win-titlebar" id="tb-${id}">
+                                                      <div class="win-controls">
+                                                        <button class="wc-btn wc-close" title="Close"    onclick="closeWindow('${id}')"></button>
+                                                        <button class="wc-btn wc-min"   title="Minimize" onclick="minimizeWindow('${id}')"></button>
+                                                        <button class="wc-btn wc-max"   title="Maximize dblclick for fullscreen" onclick="toggleMaximize('${id}')" ondblclick="enterFullscreen('${id}')"></button>
+                                                      </div>
+                                                      <span class="win-icon">${icon}</span>
+                                                      <span class="win-title">${title}</span>
+                                                    </div>
+                                                    <div class="win-body" id="body-${id}">${content}</div>
+                                                    <div class="resize-handle" id="resize-${id}"></div>
+                                                  `;
+
+            document.getElementById('desktop').appendChild(win);
+            windows[id] = { el: win, minimized: false, maximized: false, prevRect: null };
+            focusWindow(id);
+            makeDraggable(id);
+            makeResizable(id);
+            addTaskbarItem(id, icon, title);
+        }
+
+        function focusWindow(id) {
+            if (activeWin === id) return;
+            document.querySelectorAll('.window').forEach(w => w.classList.remove('focused'));
+            const win = document.getElementById('win-' + id);
+            if (win) { win.classList.add('focused'); win.style.zIndex = ++zCounter; }
+            document.querySelectorAll('.tb-app').forEach(b => b.classList.remove('active'));
+            const tb = document.getElementById('tba-' + id);
+            if (tb) tb.classList.add('active');
+            const prev = activeWin;
+            activeWin = id;
+            if (prev && gameWindows.has(prev)) disableGameKeyLock(prev);
+            if (gameWindows.has(id)) enableGameKeyLock(id);
+        }
+
+        function closeWindow(id) {
+            const win = document.getElementById('win-' + id);
+            if (win) win.remove();
+            delete windows[id];
+            const tb = document.getElementById('tba-' + id);
+            if (tb) tb.remove();
+            if (activeWin === id) {
+                activeWin = null;
+                if (gameWindows.has(id)) disableGameKeyLock(null);
+            }
+            gameWindows.delete(id);
+            const anyMaximized = Object.values(windows).some(s => s && s.maximized);
+            document.body.classList.toggle('any-maximized', anyMaximized);
+        }
+
+        function minimizeWindow(id) {
+            const win = document.getElementById('win-' + id);
+            if (win) win.classList.add('minimized');
+            const tb = document.getElementById('tba-' + id);
+            if (tb) tb.classList.remove('active');
+            if (windows[id]) windows[id].minimized = true;
+            if (activeWin === id) {
+                activeWin = null;
+                if (gameWindows.has(id)) disableGameKeyLock(id);
+            }
+        }
+
+        function restoreWindow(id) {
+            const win = document.getElementById('win-' + id);
+            if (win) win.classList.remove('minimized');
+            if (windows[id]) windows[id].minimized = false;
+            focusWindow(id);
+        }
+
+        function toggleMaximize(id) {
+            const win = document.getElementById('win-' + id);
+            const state = windows[id];
+            if (!state) return;
+            if (!state.maximized) {
+                state.prevRect = { left: win.style.left, top: win.style.top, width: win.style.width, height: win.style.height };
+                win.classList.add('maximized');
+                state.maximized = true;
+            } else {
+                win.classList.remove('maximized');
+                const r = state.prevRect;
+                win.style.left = r.left; win.style.top = r.top;
+                win.style.width = r.width; win.style.height = r.height;
+                state.maximized = false;
+            }
+            const anyMaximized = Object.values(windows).some(s => s && s.maximized);
+            document.body.classList.toggle('any-maximized', anyMaximized);
+        }
+
+        function addTaskbarItem(id, icon, title) {
+            const btn = document.createElement('button');
+            btn.className = 'tb-app active';
+            btn.id = 'tba-' + id;
+            btn.innerHTML = `<span>${icon}</span><span>${title}</span><span class="dot"></span>`;
+            btn.onclick = () => {
+                if (!windows[id]) return;
+                if (windows[id].minimized) restoreWindow(id);
+                else if (activeWin === id) minimizeWindow(id);
+                else focusWindow(id);
+            };
+            document.getElementById('taskbar-apps').appendChild(btn);
+        }
+
+        function makeDraggable(id) {
+            const tb = document.getElementById('tb-' + id);
+            const win = document.getElementById('win-' + id);
+            let ox, oy;
+            tb.addEventListener('mousedown', e => {
+                if (e.target.closest('.wc-btn')) return;
+                if (windows[id] && windows[id].maximized) return;
+                focusWindow(id);
+                ox = e.clientX - win.offsetLeft;
+                oy = e.clientY - win.offsetTop;
+                const move = ev => {
+                    win.style.left = Math.max(0, Math.min(window.innerWidth - 100, ev.clientX - ox)) + 'px';
+                    win.style.top = Math.max(0, Math.min(window.innerHeight - 80, ev.clientY - oy)) + 'px';
+                };
+                const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+                document.addEventListener('mousemove', move);
+                document.addEventListener('mouseup', up);
+            });
+            win.addEventListener('mousedown', () => focusWindow(id));
+        }
+
+        function makeResizable(id) {
+            const handle = document.getElementById('resize-' + id);
+            const win = document.getElementById('win-' + id);
+            handle.addEventListener('mousedown', e => {
+                e.preventDefault();
+                const sx = e.clientX, sy = e.clientY;
+                const sw = win.offsetWidth, sh = win.offsetHeight;
+                const move = ev => {
+                    win.style.width = Math.max(300, sw + ev.clientX - sx) + 'px';
+                    win.style.height = Math.max(200, sh + ev.clientY - sy) + 'px';
+                };
+                const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+                document.addEventListener('mousemove', move);
+                document.addEventListener('mouseup', up);
+            });
+        }
+
+        let histIdx = -1;
+        const cmdHistory = [];
+
+        const MIST_VERSION = {
+            version: '1.3.1',
+        };
+
+        const cmds = {
+            help: () =>
+                `<span class="term-highlight">MIST OS Terminal</span>  <span class="term-dim">v1.0.0-Veil</span>
+<span class="term-dim">──────────────────────────────</span>
+<span class="term-success">AVAILABLE COMMANDS:</span>
+
+                                                  <span class="term-highlight">ver</span>      Show system version information
+                                                  <span class="term-highlight">version</span>  Alias for ver
+                                                  <span class="term-highlight">clear</span>    Clear the terminal screen
+                                                  <span class="term-highlight">help</span>     Show this help message
+                                                  <span class="term-highlight">exit</span>     Close this terminal window
+                                                  <span class="term-highlight">redoset</span>  Re-run first-time cloak setup
+
+<span class="term-dim">More commands coming soon.</span>`,
+
+            ver: () => versionOutput(),
+            version: () => versionOutput(),
+
+            clear: () => '__CLEAR__',
+            exit: () => '__CLOSE__',
+            redoset: () => { setTimeout(() => redoSetup(), 100); return '<span class="term-success">Opening cloak setup...</span>'; },
+        };
+
+        function versionOutput() {
+            return `
+<span class="term-highlight">  ███╗   ███╗██╗███████╗████████╗    ██████╗ ███████╗</span>
+<span class="term-highlight">  ████╗ ████║██║██╔════╝╚══██╔══╝   ██╔═══██╗██╔════╝</span>
+<span class="term-highlight">  ██╔████╔██║██║███████╗   ██║      ██║   ██║███████╗</span>
+<span class="term-highlight">  ██║╚██╔╝██║██║╚════██║   ██║      ██║   ██║╚════██║</span>
+<span class="term-highlight">  ██║ ╚═╝ ██║██║███████║   ██║      ╚██████╔╝███████║</span>
+<span class="term-dim">  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝       ╚═════╝ ╚══════╝</span>
+
+                                                  <span class="term-success">OS Name    </span>  ${MIST_VERSION.name}
+                                                  <span class="term-success">Version    </span>  ${MIST_VERSION.version} (${MIST_VERSION.codename})
+                                                  <span class="term-success">Kernel     </span>  ${MIST_VERSION.kernel}
+                                                  <span class="term-success">Build      </span>  ${MIST_VERSION.build}
+                                                  <span class="term-success">Architecture</span> ${MIST_VERSION.arch}
+                                                  <span class="term-success">Shell      </span>  mist-sh 1.0.0
+                                                  <span class="term-success">Terminal   </span>  mterm 1.0`;
+        }
+
+        function openTerminal() {
+            const id = 'terminal-' + Date.now();
+            const content = `
+                                                    <div class="terminal-body" id="term-out-${id}">
+                                                      <div class="term-line"><span class="term-highlight">MIST OS Terminal</span>  <span class="term-dim"> type <span style="color:var(--accent)">help</span> to get started</span></div>
+                                                      <div class="term-line"> </div>
+                                                    </div>
+                                                    <div class="term-input-row">
+                                                      <span class="term-input-prompt" id="term-prompt-${id}"></span>
+                                                      <input class="term-input" id="term-in-${id}" type="text" autocomplete="off" spellcheck="false" placeholder="enter command...">
+                                                    </div>
+                                                  `;
+            createWindow(id, 'Terminal', '🖥️', 660, 400, content);
+            updatePrompt(id);
+            const inp = document.getElementById('term-in-' + id);
+            if (inp) {
+                inp.focus();
+                inp.addEventListener('keydown', e => handleTermKey(e, id));
+            }
+        }
+
+        function updatePrompt(id) {
+            const el = document.getElementById('term-prompt-' + id);
+            if (!el) return;
+            el.innerHTML = `<span class="term-user">${getUsername()}</span><span class="term-dim">@</span><span class="term-highlight">mistos</span><span class="term-dim">:~$ </span>`;
+        }
+
+        function handleTermKey(e, id) {
+            const inp = document.getElementById('term-in-' + id);
+            if (!inp) return;
+
+            if (e.key === 'Enter') {
+                const raw = inp.value.trim();
+                inp.value = '';
+                if (!raw) { appendLine(id, ''); updatePrompt(id); return; }
+                cmdHistory.unshift(raw);
+                histIdx = -1;
+
+                // echo prompt here
+                appendLine(id,
+                    `<span class="term-user">${getUsername()}</span><span class="term-dim">@</span><span class="term-highlight">mistos</span><span class="term-dim">:~$ </span>${raw.replace(/</g, '&lt;')}`
+                );
+
+                const parts = raw.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+                const cmd = parts[0] ? parts[0].toLowerCase() : '';
+                const args = parts.slice(1).map(a => a.replace(/^["']|["']$/g, ''));
+
+                if (cmds[cmd]) {
+                    const out = cmds[cmd](args);
+                    if (out === '__CLEAR__') {
+                        const outEl = document.getElementById('term-out-' + id);
+                        if (outEl) outEl.innerHTML = '';
+                    } else if (out === '__CLOSE__') {
+                        closeWindow(id); return;
+                    } else if (out) {
+                        appendLine(id, out);
+                    }
+                } else if (cmd) {
+                    appendLine(id, `<span class="term-error">mist-sh: ${cmd}: command not found</span> <span class="term-dim">(try <span style="color:var(--accent)">help</span>)</span>`);
+                }
+
+                appendLine(id, '');
+                updatePrompt(id);
+                scrollTerm(id);
+
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (histIdx < cmdHistory.length - 1) { histIdx++; inp.value = cmdHistory[histIdx]; }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (histIdx > 0) { histIdx--; inp.value = cmdHistory[histIdx]; }
+                else { histIdx = -1; inp.value = ''; }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const val = inp.value;
+                const matches = Object.keys(cmds).filter(c => c.startsWith(val) && val.length > 0);
+                if (matches.length === 1) inp.value = matches[0];
+            } else if (e.key === 'l' && e.ctrlKey) {
+                e.preventDefault();
+                const outEl = document.getElementById('term-out-' + id);
+                if (outEl) outEl.innerHTML = '';
+            }
+        }
+
+        function appendLine(id, html) {
+            const out = document.getElementById('term-out-' + id);
+            if (!out) return;
+            const div = document.createElement('div');
+            div.className = 'term-line';
+            div.innerHTML = html;
+            out.appendChild(div);
+        }
+
+        function scrollTerm(id) {
+            const out = document.getElementById('term-out-' + id);
+            if (out) setTimeout(() => { out.scrollTop = out.scrollHeight; }, 10);
+        }
+
+        function openEditor() { openEditorWithContent('untitled.txt', ''); }
+
+        function openEditorWithContent(filename, content) {
+            const id = 'editor-' + Date.now();
+            const escaped = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const lines = content.split('\n').length;
+            const gutterNums = Array.from({ length: Math.max(lines, 20) }, (_, i) => `<span>${i + 1}</span>`).join('');
+            const html = `
+                                                    <div class="editor-toolbar">
+                                                      <button class="fm-btn" onclick="editorSave('${id}')">💾 Save</button>
+                                                      <button class="fm-btn" onclick="editorNew('${id}')">📄 New</button>
+                                                      <span class="editor-filename" id="ed-fname-${id}">${filename}</span>
+                                                      <button class="fm-btn">🔍 Find</button>
+                                                    </div>
+                                                    <div class="editor-area">
+                                                      <div class="editor-gutter" id="ed-gutter-${id}">${gutterNums}</div>
+                                                      <textarea class="editor-textarea" id="ed-ta-${id}" spellcheck="false"
+                                                        oninput="editorUpdate('${id}')" onscroll="editorSyncScroll('${id}')">${escaped}</textarea>
+                                                    </div>
+                                                    <div class="editor-statusbar" id="ed-status-${id}">
+                                                      <span id="ed-ln-${id}">Ln 1, Col 1</span>
+                                                      <span id="ed-words-${id}">0 words</span>
+                                                      <span>UTF-8</span>
+                                                      <span>Plain Text</span>
+                                                      <span id="ed-mod-${id}"></span>
+                                                    </div>
+                                                  `;
+            createWindow(id, `Editor — ${filename}`, '📝', 700, 480, html);
+            setTimeout(() => {
+                editorUpdate(id);
+                const ta = document.getElementById('ed-ta-' + id);
+                if (ta) ta.addEventListener('keydown', e => {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const s = ta.selectionStart, end = ta.selectionEnd;
+                        ta.value = ta.value.substring(0, s) + '  ' + ta.value.substring(end);
+                        ta.selectionStart = ta.selectionEnd = s + 2;
+                    }
+                });
+            }, 50);
+        }
+
+        function editorUpdate(id) {
+            const ta = document.getElementById('ed-ta-' + id);
+            const gutter = document.getElementById('ed-gutter-' + id);
+            if (!ta) return;
+            const lines = ta.value.split('\n').length;
+            const lnEl = document.getElementById('ed-ln-' + id);
+            const wdEl = document.getElementById('ed-words-' + id);
+            const modEl = document.getElementById('ed-mod-' + id);
+            if (lnEl) { const pos = ta.value.substring(0, ta.selectionStart).split('\n'); lnEl.textContent = `Ln ${pos.length}, Col ${pos[pos.length - 1].length + 1}`; }
+            if (wdEl) wdEl.textContent = `${words} words`;
+            if (modEl) modEl.textContent = '● Modified';
+        }
+
+        function editorSyncScroll(id) {
+            const ta = document.getElementById('ed-ta-' + id);
+            const gutter = document.getElementById('ed-gutter-' + id);
+            if (ta && gutter) gutter.scrollTop = ta.scrollTop;
+        }
+
+        function editorSave(id) {
+            showNotif('Editor', 'File saved successfully!');
+            const modEl = document.getElementById('ed-mod-' + id);
+            if (modEl) modEl.textContent = '';
+        }
+        function editorNew(id) {
+            const ta = document.getElementById('ed-ta-' + id);
+            if (ta) { ta.value = ''; editorUpdate(id); }
+        }
+
+        // settings yay that nobody will use except me because it has a password feature which i assume can be easily cracked because i suck at encoding stuff
+        function openSettings() {
+            const id = 'settings-' + Date.now();
+            const html = `
+                                                    <div style="display:flex;height:100%;overflow:hidden;">
+                                                      <div style="width:175px;border-right:1px solid var(--border);background:var(--surface2);padding:10px 0;flex-shrink:0;">
+                                                        <div class="fm-sidebar-section">MIST OS</div>
+                                                        <div class="fm-sidebar-item active" id="stab-account-${id}" onclick="showSettingsTab('${id}','account')">👤 Account</div>
+                                                        <div class="fm-sidebar-item" id="stab-system-${id}"  onclick="showSettingsTab('${id}','system')">💡 System</div>
+                                                        <div class="fm-sidebar-item" id="stab-display-${id}" onclick="showSettingsTab('${id}','display')">🎨 Appearance</div>
+                                                        <div class="fm-sidebar-item" id="stab-about-${id}"   onclick="showSettingsTab('${id}','about')">ℹ️ About</div>
+                                                      </div>
+                                                      <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+                                                        <div id="stab-content-${id}" style="flex:1;padding:28px;overflow-y:auto;"></div>
+                                                      </div>
+                                                    </div>
+                                                  `;
+            createWindow(id, 'System Settings', '⚙️', 680, 480, html);
+            setTimeout(() => showSettingsTab(id, 'account'), 30);
+        }
+
+        const settingsTabs = {
+            account: (id) => `
+                                                    <div style="font-size:20px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:4px;">ACCOUNT</div>
+                                                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:28px;font-family:var(--font-mono);">Manage your user profile</div>
+
+                                                    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+                                                      <div style="font-size:10px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">USERNAME</div>
+                                                      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                                        <input class="settings-input" id="username-input-${id}" value="${getUsername()}" maxlength="32" placeholder="Enter username">
+                                                        <button class="settings-save-btn" onclick="applyUsername('${id}')">Apply</button>
+                                                      </div>
+                                                      <div style="font-size:10px;color:var(--text-dim);margin-top:10px;">
+                                                        Only letters, numbers, underscores and hyphens. Applied immediately to all open terminals.
+                                                      </div>
+                                                      <div id="username-status-${id}" style="font-size:11px;margin-top:8px;font-family:var(--font-mono);min-height:16px;"></div>
+                                                    </div>
+
+                                                    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;">
+                                                      <div style="font-size:10px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">CURRENT SESSION</div>
+                                                      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:2.1;">
+                                                        User: <span style="color:var(--accent)" id="settings-username-display-${id}">${getUsername()}</span><br>
+                                                        Hostname: <span style="color:var(--text)">mistos</span><br>
+                                                        Shell: <span style="color:var(--text)">mist-sh 1.0.0</span><br>
+                                                        Home: <span style="color:var(--text)">/home/${getUsername()}</span>
+                                                      </div>
+                                                    </div>
+
+
+                                                  `,
+
+            system: (id) => `
+                                                    <div style="font-size:20px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:4px;">SYSTEM</div>
+                                                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:28px;font-family:var(--font-mono);">Hardware and performance</div>
+                                                    ${sRow('CPU', 'Intel Core i9-13900K @ 3.0GHz')}
+                                                    ${sRow('RAM', '8 GB DDR5-6000')}
+                                                    ${sRow('GPU', 'NVIDIA GeForce RTX 4090')}
+                                                    ${sRow('Storage', '256 GB NVMe SSD')}
+                                                    ${sRow('Network', 'Intel I225-V 2.5GbE')}
+                                                    ${sRow('Uptime', Math.floor(performance.now() / 3600000) + 'h ' + Math.floor((performance.now() % 3600000) / 60000) + 'm')}
+                                                  `,
+
+            display: (id) => `
+                                                    <div style="font-size:20px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:4px;">APPEARANCE</div>
+                                                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:28px;font-family:var(--font-mono);">Visual preferences</div>
+                                                    ${sRow('Theme', 'Dark Cyber')}
+                                                    ${sRow('Accent', 'Cyan (#00d4ff)')}
+                                                    ${sRow('Resolution', '1920 × 1080 @ 144Hz')}
+                                                    ${sRow('Scale', '100%')}
+                                                    ${sRow('Font UI', 'Rajdhani')}
+                                                    ${sRow('Font Mono', 'JetBrains Mono')}
+                                                  `,
+
+            about: (id) => `
+                                                    <div style="font-size:20px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:4px;">ABOUT MIST OS</div>
+                                                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:28px;font-family:var(--font-mono);">System information</div>
+                                                    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+                                                      <div style="font-family:var(--font-mono);font-size:11px;color:var(--accent);line-height:1.2;margin-bottom:14px;font-weight:700;font-size:13px;">MIST OS 1.0.0 "Veil"</div>
+                                                      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:2.1;">
+                                                        Kernel:    <span style="color:var(--text)">6.8.1-mist</span><br>
+                                                        Build:     <span style="color:var(--text)">stable-20250506</span><br>
+                                                        Arch:      <span style="color:var(--text)">x86_64</span><br>
+                                                        License:   <span style="color:var(--text)">MIST Public License v1</span>
+                                                      </div>
+                                                    </div>
+                                                    <div style="font-size:10px;color:var(--text-muted);text-align:center;font-family:var(--font-mono);">© 2025 MIST OS Project. All rights reserved.</div>
+                                                  `,
+        };
+
+        function sRow(label, value) {
+            return `<div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                                                    <span style="font-size:12px;font-weight:600;color:var(--text-dim);letter-spacing:0.5px;">${label}</span>
+                                                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--text);">${value}</span>
+                                                  </div>`;
+        }
+
+        function showSettingsTab(id, tab) {
+            const content = document.getElementById('stab-content-' + id);
+            if (!content) return;
+            content.innerHTML = settingsTabs[tab] ? settingsTabs[tab](id) : '';
+            // update sidebar active
+            ['account', 'system', 'display', 'about'].forEach(t => {
+                const el = document.getElementById(`stab-${t}-${id}`);
+                if (el) el.classList.toggle('active', t === tab);
+            });
+        }
+
+        function applyUsername(id) {
+            const inp = document.getElementById('username-input-' + id);
+            const statusEl = document.getElementById('username-status-' + id);
+            if (!inp) return;
+            const result = setUsername(inp.value);
+            if (result) {
+                inp.value = result;
+                if (statusEl) { statusEl.style.color = 'var(--accent3)'; statusEl.textContent = `✓ Username changed to "${result}"`; }
+                const disp = document.getElementById('settings-username-display-' + id);
+                if (disp) disp.textContent = result;
+                showNotif('Settings', `Username updated to "${result}"`);
+            } else {
+                if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = '✗ Invalid username use letters, numbers, _ or - only'; }
+            }
+        }
+
+
+        function openApp(type) {
+            if (type === 'terminal') openTerminal();
+            else if (type === 'editor') openEditor();
+            else if (type === 'settings') openSettings();
+            else if (type === 'games') openGames();
+            else if (type === 'browser') openDogeub();
+            else if (type === 'suggestions') openSuggestions();
+            else if (type === 'chat') openChat();
+            else if (type === 'sort') openSort();
+            else if (type === 'share') openShare();
+        }
+
+        const DOGEUB_URL = 'https://instructure.storage.googleapis.com/index.html#/search';
+
+        function openDogeub() {
+            const id = 'browser-' + Date.now();
+            const html = `
+                                                    <div class="browser-frame-wrap" id="br-wrap-${id}">
+                                                        <iframe class="browser-iframe" id="br-frame-${id}"
+                                                            src="${DOGEUB_URL}"
+                                                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"></iframe>
+                                                    </div>
+                                                `;
+            createWindow(id, 'dogeub browser', '🌐', 1000, 660, html);
+        }
+
+        function openSuggestions() {
+            const SUGGESTIONS_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd2XwgIaYpV3ofP2LaAVDiG8sy0mejdkGQy91IU6GuXcKuW4A/viewform?usp=publish-editor';
+            const id = 'suggestions-' + Date.now();
+            const html = `
+                                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:18px;background:var(--surface);padding:30px;">
+                                                    <div style="font-size:42px;">💡</div>
+                                                    <div style="font-family:var(--font-ui);font-size:18px;font-weight:700;color:var(--text);letter-spacing:1px;">Got a suggestion?</div>
+                                                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);text-align:center;line-height:1.7;">Help improve MIST OS by sharing<br>feedback, ideas, or bug reports.</div>
+                                                    <button onclick="window.open('${SUGGESTIONS_URL}','_blank')"
+                                                        style="margin-top:8px;padding:11px 28px;border-radius:9px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:white;cursor:pointer;font-family:var(--font-ui);font-size:14px;font-weight:700;letter-spacing:1px;box-shadow:0 0 20px rgba(0,212,255,0.25);transition:opacity 0.15s,transform 0.1s;"
+                                                        onmouseover="this.style.opacity='0.85';this.style.transform='translateY(-1px)'"
+                                                        onmouseout="this.style.opacity='1';this.style.transform='translateY(0)'">
+                                                        Open Suggestions Form ↗
+                                                    </button>
+                                                </div>`;
+            createWindow(id, 'Suggestions', '💡', 380, 300, html);
+        }
+
+        const SHARE_TEXT = 'Try out this cool website! Click anywhere to open Mist OS.\nhttps://neon_maze_3d.playcode.io/';
+
+        function doShareCopy(btnId) {
+            const b = document.getElementById(btnId);
+            const ta = document.createElement('textarea');
+            ta.value = SHARE_TEXT;
+            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) { }
+            document.body.removeChild(ta);
+            if (!b) return;
+            b.textContent = '✓ Copied!';
+            b.style.background = '#3fb950';
+            b.style.borderColor = '#3fb950';
+            b.style.color = '#000';
+            setTimeout(() => {
+                b.textContent = 'Copy';
+                b.style.background = '';
+                b.style.borderColor = '';
+                b.style.color = '';
+            }, 2200);
+        }
+
+        function openShare() {
+            const id = 'share-' + Date.now();
+            const btnId = 'share-copy-btn-' + id;
+            const html = `
+                        <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:28px;box-sizing:border-box;text-align:center;">
+                            <div style="font-size:36px;line-height:1;">🔗</div>
+                            <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.5;max-width:280px;">
+                                Send this anywhere like your group chat or Google Classroom
+                            </div>
+                            <div style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;box-sizing:border-box;text-align:left;">
+                                <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.7;white-space:pre-wrap;word-break:break-all;">Try out this cool website! Click anywhere to open Mist OS.
+https://neon_maze_3d.playcode.io/</div>
+                            </div>
+                            <button id="${btnId}" onclick="doShareCopy('${btnId}')"
+                                style="padding:10px 36px;border-radius:7px;font-size:13px;font-weight:800;font-family:var(--font-ui);letter-spacing:.5px;border:2px solid var(--accent);background:var(--accent);color:#000;cursor:pointer;transition:all .15s;">
+                                Copy
+                            </button>
+                        </div>`;
+            createWindow(id, 'Share MIST OS', '🔗', 360, 340, html);
+        }
+
+        const SM_APPS = [
+            { icon: '🖥️', label: 'Terminal', action: () => openApp('terminal') },
+            { icon: '💡', label: 'Suggestions', action: () => openApp('suggestions') },
+            { icon: '💬', label: 'Chat', action: () => openApp('chat') },
+            { icon: '📊', label: 'Sort', action: () => openApp('sort') },
+            { icon: '📝', label: 'Editor', action: () => openApp('editor') },
+            { icon: '⚙️', label: 'Settings', action: () => openApp('settings') },
+            { icon: '🎮', label: 'Games', action: () => openApp('games') },
+            { icon: '🌐', label: 'dogeub', action: () => openApp('browser') },
+            { icon: '🔗', label: 'Share', action: () => openApp('share') },
+            { icon: '📖', label: 'Tutorial', action: () => startTutorial() },
+        ];
+
+        function buildSmGrid(apps) {
+            return apps.map(a => `
+                                                    <div class="sm-app" onclick="(${a.action.toString()})();closeStartMenu()">
+                                                        <div class="sm-ico">${a.icon}</div>
+                                                        <div class="sm-lbl">${a.label}</div>
+                                                    </div>`).join('');
+        }
+
+        function toggleStartMenu() {
+            const m = document.getElementById('start-menu');
+            if (m.classList.contains('open')) {
+                closeStartMenu();
+            } else {
+                document.getElementById('sm-grid').innerHTML = buildSmGrid(SM_APPS);
+                document.getElementById('sm-search-inp').value = '';
+                m.classList.add('open');
+                setTimeout(() => document.getElementById('sm-search-inp').focus(), 50);
+            }
+        }
+
+        function closeStartMenu() {
+            document.getElementById('start-menu').classList.remove('open');
+        }
+
+        function smFilter(q) {
+            const filtered = q.trim()
+                ? SM_APPS.filter(a => a.label.toLowerCase().includes(q.toLowerCase()))
+                : SM_APPS;
+            document.getElementById('sm-grid').innerHTML = buildSmGrid(filtered);
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#start-menu') && !e.target.closest('#app-launcher')) {
+                closeStartMenu();
+            }
+        });
+
+        function enterFullscreen(id) {
+            const win = document.getElementById('win-' + id);
+            if (!win) return;
+            const state = windows[id];
+            if (state && !state.maximized) toggleMaximize(id);
+            const el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            showNotif('MIST OS', 'Fullscreen press Left Alt to exit');
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Alt' && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
+                // imma ditch this system its trash
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    e.preventDefault();
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                }
+            }
+        }, true);
+
+        let tutIdx = 0;
+        const TUT_STEPS = [
+            {
+                title: 'Welcome to MIST OS! 👋',
+                body: 'This quick tour covers everything you need to know. Click <b>Next</b> to continue, or <b>Skip</b> anytime.',
+                target: null,
+            },
+            {
+                title: 'Desktop Icons',
+                body: '<b>Double-click</b> any icon on the left to open an app. Icons live in a column along the left edge.',
+                target: '#icon-grid',
+            },
+            {
+                title: 'The Taskbar',
+                body: 'The bar at the bottom is your <b>taskbar</b>. Open windows appear here as buttons, click to focus or minimise them.',
+                target: '#taskbar',
+            },
+            {
+                title: 'Start Menu (M Button)',
+                body: 'Click the glowing <b>M button</b> on the left of the taskbar to open the Start Menu and search for apps.',
+                target: '#app-launcher',
+            },
+            {
+                title: 'Clock & System Tray',
+                body: 'The <b>clock and tray icons</b> sit on the right side of the taskbar showing time, date and system status.',
+                target: '#taskbar-right',
+            },
+            {
+                title: 'Window Controls',
+                body: 'Every window has three dots in the top-left:<br><b>Red</b> = Close · <b>Yellow</b> = Minimise · <b>Green</b> = Maximise<br><b>Double-click Green</b> = true fullscreen. Press <b>Left Alt</b> to exit.',
+                target: null,
+                action: () => { openTerminal(); },
+            },
+            {
+                title: 'Moving & Resizing Windows',
+                body: '<b>Drag</b> the title bar to move a window. <b>Drag the corner handle</b> (bottom-right) to resize it.',
+                target: null,
+            },
+            {
+                title: 'Terminal 🖥️',
+                body: 'Open the terminal from the desktop or Start Menu. Type <b>help</b> to see all commands. Supports history (↑↓) and Tab autocomplete.',
+                target: '#icon-grid',
+            },
+            {
+                title: 'Text Editor 📝',
+                body: 'A full editor with <b>line numbers</b>, word count, and save. Open from the icon or Start Menu.',
+                target: '#icon-grid',
+            },
+            {
+                title: 'Games 🎮',
+                body: 'Launch embedded games from the <b>Games</b> app. Keyboard is locked to the game while it\'s focused click outside to unlock.',
+                target: '#icon-grid',
+            },
+            {
+                title: 'Browser 🌐',
+                body: 'The Browser routes requests through your <b>Cloudflare Worker proxy</b>. Enter the Worker URL in the proxy bar, then type any address and press GO.',
+                target: '#icon-grid',
+            },
+            {
+                title: 'Right-Click Menu',
+                body: '<b>Right-click</b> anywhere on the desktop to get quick access to apps, refresh, and settings.',
+                target: null,
+            },
+            {
+                title: 'Settings & Cloak ⚙️',
+                body: 'Change your username in <b>Settings → Account</b>. Re-run the cloak setup anytime with the <b>redoset</b> terminal command or from Settings.',
+                target: '#icon-grid',
+            },
+            {
+                title: 'You\'re all set! 🚀',
+                body: 'That\'s everything! You can restart this tutorial anytime by double-clicking the <b>📖 Tutorial</b> icon on the desktop.',
+                target: null,
+            },
+        ];
+
+        function startTutorial() {
+            hideTutHint();
+            tutIdx = 0;
+            document.getElementById('tut-overlay').style.display = 'block';
+            renderTutStep();
+        }
+
+        function endTutorial() {
+            document.getElementById('tut-overlay').style.display = 'none';
+            document.getElementById('tut-spotlight').style.cssText = '';
+        }
+
+        function tutStep(dir) {
+            tutIdx = Math.max(0, Math.min(TUT_STEPS.length - 1, tutIdx + dir));
+            renderTutStep();
+        }
+
+        function renderTutStep() {
+            const step = TUT_STEPS[tutIdx];
+            const total = TUT_STEPS.length;
+            const overlay = document.getElementById('tut-overlay');
+            const spotlight = document.getElementById('tut-spotlight');
+            const card = document.getElementById('tut-card');
+
+            document.getElementById('tut-step-badge').textContent = `STEP ${tutIdx + 1} / ${total}`;
+            document.getElementById('tut-title').textContent = step.title;
+            document.getElementById('tut-body').innerHTML = step.body;
+
+            // progress dots
+            const prog = document.getElementById('tut-progress');
+            prog.innerHTML = TUT_STEPS.map((_, i) =>
+                `<div class="tut-dot${i === tutIdx ? ' active' : ''}"></div>`).join('');
+
+            // prev and next buttons
+            document.getElementById('tut-prev-btn').style.display = tutIdx === 0 ? 'none' : '';
+            const nextBtn = document.getElementById('tut-next-btn');
+            nextBtn.textContent = tutIdx === total - 1 ? 'Finish ✓' : 'Next →';
+            if (tutIdx === total - 1) {
+                nextBtn.onclick = endTutorial;
+            } else {
+                nextBtn.onclick = () => tutStep(1);
+            }
+
+            if (step.action) step.action();
+
+            if (step.target) {
+                const el = document.querySelector(step.target);
+                if (el) {
+                    const r = el.getBoundingClientRect();
+                    const pad = 6;
+                    spotlight.style.cssText = `
+                                                            left:${r.left - pad}px;
+                                                            top:${r.top - pad}px;
+                                                            width:${r.width + pad * 2}px;
+                                                            height:${r.height + pad * 2}px;
+                                                        `;
+                    positionTutCard(card, r);
+                    return;
+                }
+            }
+            spotlight.style.cssText = 'left:50%;top:50%;width:0;height:0;box-shadow:none;';
+            card.style.cssText = `
+                                                    left: 50%;
+                                                    top: 50%;
+                                                    transform: translate(-50%, -50%);
+                                                `;
+        }
+
+        function positionTutCard(card, targetRect) {
+            const cw = 300, ch = 200;
+            const vw = window.innerWidth, vh = window.innerHeight;
+            let left, top;
+            if (targetRect.right + cw + 20 < vw) {
+                left = targetRect.right + 16;
+                top = Math.min(Math.max(targetRect.top, 10), vh - ch - 10);
+            } else if (targetRect.left - cw - 20 > 0) {
+                left = targetRect.left - cw - 16;
+                top = Math.min(Math.max(targetRect.top, 10), vh - ch - 10);
+            } else if (targetRect.bottom + ch + 16 < vh) {
+                left = Math.max(10, Math.min(targetRect.left, vw - cw - 10));
+                top = targetRect.bottom + 16;
+            } else {
+                left = Math.max(10, Math.min(targetRect.left, vw - cw - 10));
+                top = targetRect.top - ch - 16;
+            }
+            card.style.cssText = `left:${left}px;top:${top}px;transform:none;`;
+        }
+
+        // THIS is what they're here for.
+        const GAMES_DB = [
+            { id: "snake", name: "Minecraft", emoji: "🧱", xframe: false, url: "https://freedombrowser.org/static/mc/1.12.2/wasm/" },
+            { id: "un", name: "Undertale", emoji: "❤️", xframe: false, url: "https://sleepie.uk/undertale/" },
+            { id: "de", name: "Deltarune", emoji: "🤍", xframe: false, url: "https://mexi.rest/schoolwork/deltarune/" },
+            { id: "f1", name: "FNAF 1", emoji: "🐻", xframe: false, url: "https://mexi.rest/schoolwork/FNAF1-main/FNAF1-main/" },
+            { id: "f2", name: "FNAF 2", emoji: "🐻", xframe: false, url: "https://mexi.rest/schoolwork/fnaf2/" },
+            { id: "ucn", name: "UCN", emoji: "🐻", xframe: false, url: "https://mexi.rest/schoolwork/ucn-main/ucn-main/" },
+            { id: "sr", name: "Slow Roads", emoji: "🚗", xframe: false, url: "https://slowroads.io/" },
+            { id: "ultk", name: "Ultrakil", emoji: "🤖", xframe: false, url: "https://gg.storytellergame.io/ultrakill/" },
+            { id: "rg", name: "Rocket Goal", emoji: "🏎️", xframe: false, url: "https://rocketgoal.io" },
+            { id: "sm64", name: "SM64", emoji: "🚽", xframe: false, url: "https://mexi.rest/schoolwork/mario64/" },
+            { id: "nf", name: "Neal.fun", emoji: "🎉", xframe: false, url: "https://neal.fun/" },
+            { id: "ddlc", name: "DDLC", emoji: "👧", xframe: false, url: "https://mexi.rest/schoolwork/ddlcplus/" },
+            { id: "pm", name: "PenguinMod", emoji: "🐧", xframe: false, url: "https://studio.penguinmod.com/editor.html" },
+            { id: "gdc", name: "Geometry.com", emoji: "🟦", xframe: false, url: "https://www.geometrydash.com/game/index.html" },
+            { id: "gdl", name: "Geometry Lite", emoji: "🟨", xframe: false, url: "https://geometrylitegame.org/geometry-dash-lite-game.embed" },
+            { id: "dt", name: "Dashmetry", emoji: "🟩", xframe: false, url: "https://dashmetry.com/game/homepage/" }
+
+        ];
+
+        function openGames() {
+            const id = 'games-' + Date.now();
+
+            const cards = GAMES_DB.map(g => `
+                                                    <div class="game-card" onclick="launchGame('${g.id}')">
+                                                      <div class="game-card-emoji">${g.emoji}</div>
+                                                      <div class="game-card-name">${g.name}</div>
+                                                      <div class="game-card-tag ${g.xframe ? 'xframe' : 'direct'}">${g.xframe ? 'X-Frame' : 'Direct'}</div>
+                                                    </div>
+                                                  `).join('');
+
+            const html = `
+                                                    <div class="games-search-bar">
+                                                      <input class="games-search-input" id="games-search-${id}" placeholder="🔍  Search games..." oninput="filterGames('${id}', this.value)">
+                                                      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);">${GAMES_DB.length} GAMES</span>
+                                                    </div>
+                                                    <div class="games-header">INSTALLED GAMES</div>
+                                                    <div class="games-grid" id="games-grid-${id}">
+                                                      ${cards}
+                                                    </div>
+                                                  `;
+            createWindow(id, 'Games', '🎮', 620, 480, html);
+        }
+
+        function filterGames(winId, query) {
+            const grid = document.getElementById('games-grid-' + winId);
+            if (!grid) return;
+            const q = query.toLowerCase().trim();
+            const filtered = q
+                ? GAMES_DB.filter(g => g.name.toLowerCase().includes(q) || (g.xframe ? 'xframe x-frame' : 'direct').includes(q))
+                : GAMES_DB;
+            grid.innerHTML = filtered.map(g => `
+                                                    <div class="game-card" onclick="launchGame('${g.id}')">
+                                                      <div class="game-card-emoji">${g.emoji}</div>
+                                                      <div class="game-card-name">${g.name}</div>
+                                                      <div class="game-card-tag ${g.xframe ? 'xframe' : 'direct'}">${g.xframe ? 'X-Frame' : 'Direct'}</div>
+                                                    </div>
+                                                  `).join('');
+        }
+
+        function launchGame(gameId) {
+            const g = GAMES_DB.find(x => x.id === gameId);
+            if (!g) return;
+            const id = 'game-' + g.id + '-' + Date.now();
+
+            const statusBar = `
+                                                          <div style="padding:3px 12px;background:var(--surface2);border-bottom:1px solid var(--border);
+                                                            font-family:var(--font-mono);font-size:9px;letter-spacing:0.8px;flex-shrink:0;
+                                                            display:flex;align-items:center;gap:10px;">
+                                                            <span style="color:${g.xframe ? 'var(--accent2)' : 'var(--accent3)'};">
+                                                              ${g.xframe ? '⚡ X-FRAME-BYPASS' : '✓ DIRECT'}
+                                                            </span>
+                                                            <span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g.url}</span>
+                                                            <span id="keylock-badge-${id}" style="flex-shrink:0;color:var(--text-muted);opacity:0.45;transition:color 0.2s,opacity 0.2s;">⌨ KEYBOARD FREE</span>
+                                                          </div>`;
+
+            let bodyHtml;
+            if (g.xframe) {
+                bodyHtml = `
+                                                      <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;">
+                                                        ${statusBar}
+                                                        <div style="flex:1;position:relative;">
+                                                          <script src="utils/xframe/x-frame-bypass.js" type="module"><\/script>
+                                                          <iframe is="x-frame-bypass" src="${g.url}"
+                                                            style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;"
+                                                            allow="fullscreen; pointer-lock">
+                                                          </iframe>
+                                                        </div>
+                                                      </div>`;
+            } else {
+                bodyHtml = `
+                                                      <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;">
+                                                        ${statusBar}
+                                                        <div style="flex:1;position:relative;">
+                                                          <iframe src="${g.url}"
+                                                            style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;"
+                                                            allow="fullscreen; pointer-lock"
+                                                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-modals">
+                                                          </iframe>
+                                                        </div>
+                                                      </div>`;
+            }
+
+            gameWindows.add(id);
+            createWindow(id, g.name, g.emoji, 900, 600, bodyHtml);
+            showNotif('Games', `Launching ${g.name} · ⌨ Keyboard lock active`);
+        }
+
+        document.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (e.target.closest('.window') || e.target.closest('#taskbar')) return;
+            const m = document.getElementById('ctx-menu');
+            m.style.display = 'block';
+            m.style.left = Math.min(e.clientX, window.innerWidth - 205) + 'px';
+            m.style.top = Math.min(e.clientY, window.innerHeight - 180) + 'px';
+        });
+        document.addEventListener('click', () => closeCtx());
+        function closeCtx() { document.getElementById('ctx-menu').style.display = 'none'; }
+
+        function updateClock() {
+            const d = new Date();
+            document.getElementById('clk-time').textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('clk-date').textContent = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        function showNotif(title, body, duration = 3500) {
+            const stack = document.getElementById('notif-stack');
+            const n = document.createElement('div');
+            n.className = 'notif';
+            n.innerHTML = `<div class="notif-title">${title}</div><div class="notif-body">${body}</div>`;
+            n.onclick = () => n.remove();
+            stack.appendChild(n);
+            setTimeout(() => { n.style.opacity = '0'; n.style.transition = 'opacity 0.3s'; setTimeout(() => n.remove(), 300); }, duration);
+        }
+
+        document.getElementById('app-launcher').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleStartMenu();
+        });
+
+        const bootMessages = [
+            'Stealing your RAM...',
+            'Proxies...',
+            'Initiating...',
+            'Why am I forced to do this...',
+            '#Maller___forDunce...',
+            'Boss, can I fire myself...',
+            'Ok...',
+            'Starting session...',
+        ];
+        let bootPct = 0, bootMsgIdx = 0;
+        const bootBar = document.getElementById('boot-bar');
+        const bootStatus = document.getElementById('boot-status');
+
+        function bootStep() {
+            bootPct += Math.random() * 14 + 4;
+            if (bootPct > 100) bootPct = 100;
+            bootBar.style.width = bootPct + '%';
+            bootStatus.textContent = bootMessages[Math.min(bootMsgIdx++, bootMessages.length - 1)];
+            if (bootPct < 100) setTimeout(bootStep, 170 + Math.random() * 110);
+            else setTimeout(finishBoot, 400);
+        }
+
+        function finishBoot() {
+            const bs = document.getElementById('boot-screen');
+            bs.style.transition = 'opacity 0.6s';
+            bs.style.opacity = '0';
+            setTimeout(() => {
+                bs.remove();
+                showNotif('MIST OS', `Welcome back, ${getUsername()}! System ready.`);
+                setTimeout(() => openTerminal(), 600);
+                setTimeout(() => showTutHint(), 1200);
+            }, 600);
+        }
+
+        function showTutHint() {
+            const hint = document.getElementById('tut-hint-arrow');
+            const icon = document.getElementById('tutorial-icon');
+            if (!hint || !icon) return;
+            const r = icon.getBoundingClientRect();
+            hint.style.left = (r.left + r.width / 2) + 'px';
+            hint.style.top = (r.bottom + 6) + 'px';
+            hint.style.transform = 'translateX(-50%)';
+            hint.style.display = 'flex';
+            hint.style.opacity = '1';
+        }
+
+        function hideTutHint() {
+            const hint = document.getElementById('tut-hint-arrow');
+            if (hint) {
+                hint.style.opacity = '0';
+                setTimeout(() => hint.style.display = 'none', 400);
+            }
+        }
+
+        const CHAT_WORKER_URL = 'https://chat.m48680582.workers.dev';
+
+        // users registry — isAdmin:true grants delete + crown badge
+        const CHAT_USERS = [
+            { name: "mallerper1",               color: "#FFD700",   isAdmin: true  },
+            { name: "mallerper22",              color: "#FFD700",   isAdmin: true  },
+            { name: "maller",                   color: "#FFD700",   isAdmin: true  },
+            { name: "mallerr",                  color: "#FFD700",   isAdmin: true  },
+            { name: "mallerrr",                  color: "#FFD700",   isAdmin: true  },
+            { name: "ilovezoobleandganglexoxo", color: "#adefffff", isAdmin: true },
+            { name: "mohammad_2good4u_pro",     color: "#adefffff", isAdmin: false },
+            { name: "goatedjaden",              color: "#adefffff", isAdmin: false },
+            { name: "kira",                     color: "#F472B6",   isAdmin: false },
+            { name: "ghost",                    color: "#94A3B8",   isAdmin: false },
+        ];
+        // name → { color, isAdmin }
+        const CHAT_USER_MAP = {};
+        CHAT_USERS.forEach(u => { CHAT_USER_MAP[u.name.toLowerCase()] = { color: u.color, isAdmin: !!u.isAdmin }; });
+
+        function chIsAdmin() {
+            if (!CHAT.username) return false;
+            const e = CHAT_USER_MAP[CHAT.username.toLowerCase()];
+            return !!(e && e.isAdmin);
+        }
+        function chUserColor(name) {
+            const e = CHAT_USER_MAP[(name||'').toLowerCase()];
+            return e ? e.color : null;
+        }
+
+        const CHAT = {
+            username: null,
+            winId: null,
+            messages: [],
+            lastTs: 0,
+            pollTimer: null,
+            idleTimer: null,
+            mutedUsers: new Set(),
+            cooldown: false,
+            dms: {},
+            onlineUsers: [],
+        };
+
+        (function () {
+            const s = document.createElement('style');
+            s.textContent = `
+                                            .ch-root{display:flex;flex-direction:column;height:100%;background:var(--bg);font-family:var(--font-ui);}
+                                            .ch-setup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;}
+                                            .ch-setup-logo{font-size:46px;}
+                                            .ch-setup-title{font-size:22px;font-weight:700;color:var(--accent);letter-spacing:1px;}
+                                            .ch-setup-sub{font-size:11px;color:var(--text-dim);font-family:var(--font-mono);text-align:center;line-height:1.85;}
+                                            .ch-setup-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;}
+                                            .ch-setup-lbl{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;}
+                                            .ch-setup-inp{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:9px 12px;font-family:var(--font-mono);font-size:12px;outline:none;transition:border-color .15s;}
+                                            .ch-setup-inp:focus{border-color:var(--accent);}
+                                            .ch-setup-inp::placeholder{color:var(--text-muted);}
+                                            .ch-join-btn{padding:10px;border-radius:8px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:white;cursor:pointer;font-family:var(--font-ui);font-size:13px;font-weight:700;letter-spacing:1px;transition:opacity .15s;}
+                                            .ch-join-btn:hover{opacity:.88;}
+                                            .ch-join-btn:disabled{opacity:.4;cursor:not-allowed;}
+                                            .ch-setup-status{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);text-align:center;min-height:14px;}
+                                            .ch-topbar{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;}
+                                            .ch-online-dot{width:6px;height:6px;border-radius:50%;background:var(--accent3);box-shadow:0 0 6px var(--accent3);flex-shrink:0;}
+                                            .ch-disc-btn{padding:3px 10px;border-radius:5px;background:rgba(239,68,68,.12);border:1px solid var(--red);color:var(--red);font-size:9px;font-weight:700;font-family:var(--font-ui);letter-spacing:.8px;cursor:pointer;}
+                                            .ch-disc-btn:hover{background:rgba(239,68,68,.25);}
+                                            .ch-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;}
+                                            .ch-msgs::-webkit-scrollbar{width:5px;}
+                                            .ch-msgs::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px;}
+                                            .ch-msg{display:flex;flex-direction:column;max-width:76%;}
+                                            .ch-msg.mine{align-self:flex-end;align-items:flex-end;}
+                                            .ch-msg.theirs{align-self:flex-start;align-items:flex-start;}
+                                            .ch-msg.sys{align-self:center;align-items:center;max-width:90%;}
+                                            .ch-msg-who{font-size:9px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:3px;}
+                                            .ch-bubble{padding:7px 12px;border-radius:10px;font-size:12px;line-height:1.5;word-break:break-word;}
+                                            .ch-msg.mine .ch-bubble{background:linear-gradient(135deg,var(--accent2),rgba(0,212,255,.75));color:white;border-bottom-right-radius:3px;}
+                                            .ch-msg.theirs .ch-bubble{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:3px;}
+                                            .ch-msg.sys .ch-bubble{background:transparent;color:var(--text-muted);font-size:10px;font-family:var(--font-mono);border:none;padding:2px 8px;}
+                                            .ch-msg-time{font-size:8px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px;}
+                                            .ch-msg.pinged .ch-bubble{background:rgba(255,200,50,.10);border:1px solid rgba(255,200,50,.35);color:var(--text);}
+                                            .ch-msg.pinged .ch-bubble .ch-at{color:#ffc832;font-weight:700;}
+                                            .ch-at{color:var(--accent);font-weight:700;}
+                                            .ch-msg-who{font-size:9px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:3px;cursor:pointer;transition:opacity .12s;}
+                                            .ch-input-bar{display:flex;gap:8px;padding:9px 12px;border-top:1px solid var(--border);background:var(--surface2);flex-shrink:0;align-items:center;}
+                                            .ch-inp{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 12px;font-family:var(--font-ui);font-size:13px;outline:none;transition:border-color .15s;}
+                                            .ch-inp:focus{border-color:var(--accent);}
+                                            .ch-inp:disabled{opacity:.4;cursor:not-allowed;}
+                                            .ch-inp::placeholder{color:var(--text-muted);}
+                                            .ch-send{padding:7px 18px;border-radius:7px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:white;cursor:pointer;font-family:var(--font-ui);font-size:12px;font-weight:700;letter-spacing:.5px;transition:all .15s;flex-shrink:0;min-width:68px;text-align:center;}
+                                            .ch-send:hover:not(:disabled){opacity:.85;}
+                                            .ch-send:disabled{background:var(--surface3);color:var(--text-muted);cursor:not-allowed;}
+                                            .ch-cooldown-bar{height:2px;background:var(--surface3);flex-shrink:0;}
+                                            .ch-cooldown-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .08s linear;width:0%;}
+                                            .ch-msg-who:hover{opacity:.72;}
+                                            .ch-msg-row{position:relative;display:inline-block;max-width:100%;}
+                                            .ch-del-btn{position:absolute;top:50%;transform:translateY(-50%);opacity:0;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.45);color:var(--red);border-radius:5px;padding:2px 7px;font-size:9px;font-weight:700;cursor:pointer;transition:opacity .15s,background .15s;line-height:1.4;white-space:nowrap;}
+                                            .ch-msg.mine .ch-del-btn{right:calc(100% + 6px);}
+                                            .ch-msg.theirs .ch-del-btn{left:calc(100% + 6px);}
+                                            .ch-del-btn:hover{background:rgba(239,68,68,.38);}
+                                            .ch-msg:hover .ch-del-btn{opacity:1;}
+                                            .ch-admin-badge{font-size:8px;margin-left:3px;vertical-align:middle;opacity:.85;}
+                                            .ch-dm-tag{display:inline-block;font-size:8px;background:rgba(100,160,255,.15);border:1px solid rgba(100,160,255,.3);color:var(--accent);border-radius:4px;padding:0 5px;margin-left:4px;vertical-align:middle;letter-spacing:.5px;font-family:var(--font-mono);}
+                                            .ch-topbar-dm{background:rgba(40,60,140,.18);border-bottom:1px solid rgba(80,120,255,.25);}
+                                            .ch-layout{display:flex;flex:1;overflow:hidden;}
+                                            .ch-online-panel{width:130px;flex-shrink:0;border-left:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;overflow:hidden;}
+                                            .ch-online-hdr{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);padding:9px 10px 5px;font-family:var(--font-mono);}
+                                            .ch-online-list{flex:1;overflow-y:auto;padding:0 6px 8px;}
+                                            .ch-online-list::-webkit-scrollbar{width:3px;}
+                                            .ch-online-list::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px;}
+                                            .ch-online-user{display:flex;align-items:center;gap:6px;padding:4px 4px;border-radius:5px;cursor:pointer;transition:background .12s;}
+                                            .ch-online-user:hover{background:var(--surface3);}
+                                            .ch-online-dot-sm{width:5px;height:5px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;flex-shrink:0;}
+                                            .ch-online-name{font-size:10px;font-family:var(--font-mono);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+                                            .ch-online-empty{font-size:9px;color:var(--text-muted);font-family:var(--font-mono);padding:4px 4px;opacity:.6;}
+                                        `;
+            document.head.appendChild(s);
+        })();
+
+        function chEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function chTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+        // open window geometry dash
+        function openChat() {
+            const id = 'chat-' + Date.now();
+            CHAT.winId = id;
+            const html = CHAT.username ? chBuildMain(id) : chBuildSetup(id);
+            createWindow(id, 'Chat', '💬', 680, 520, html);
+            if (CHAT.username) {
+                chRenderMsgs(id);
+                setTimeout(() => chBindInput(id), 50);
+            } else {
+                setTimeout(() => chBindInput(id), 50);
+            }
+        }
+
+        function chBuildSetup(id) {
+            return `<div class="ch-root">
+                                          <div class="ch-setup">
+                                            <div class="ch-setup-logo">💬</div>
+                                            <div class="ch-setup-title">MIST CHAT</div>
+                                            <div class="ch-setup-sub">Global chat · connecting as <span style="color:var(--accent);font-weight:700;">${chEsc(getUsername())}</span></div>
+                                            <button class="ch-join-btn" id="ch-join-btn-${id}" onclick="chJoin('${id}')">Connect →</button>
+                                            <div class="ch-setup-status" id="ch-status-${id}"></div>
+                                          </div>
+                                        </div>`;
+        }
+
+        function chBuildMain(id) {
+            return `<div class="ch-root">
+                                          <div class="ch-topbar">
+                                            <span style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.8px;">MIST CHAT</span>
+                                            <div class="ch-online-dot"></div>
+                                            <span style="font-size:10px;color:var(--accent3);font-family:var(--font-mono);">as ${chEsc(CHAT.username)}</span>
+                                            <button class="ch-disc-btn" style="margin-left:auto" onclick="chLeave('${id}')">LEAVE</button>
+                                          </div>
+                                          <div class="ch-cooldown-bar"><div class="ch-cooldown-fill" id="ch-cd-${id}"></div></div>
+                                          <div class="ch-layout">
+                                            <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
+                                              <div class="ch-msgs" id="ch-msgs-${id}"></div>
+                                              <div class="ch-input-bar">
+                                                <input class="ch-inp" id="ch-inp-${id}" placeholder="Message… (Enter to send)" autocomplete="off" spellcheck="false" maxlength="200">
+                                                <button class="ch-send" id="ch-send-${id}" onclick="chSend('${id}')">SEND</button>
+                                              </div>
+                                            </div>
+                                            <div class="ch-online-panel">
+                                              <div class="ch-online-hdr">Online</div>
+                                              <div class="ch-online-list" id="ch-online-${id}">
+                                                <div class="ch-online-empty">No one else yet</div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>`;
+        }
+
+        function chJoin(id) {
+            const st = document.getElementById('ch-status-' + id);
+            const btn = document.getElementById('ch-join-btn-' + id);
+            const name = getUsername();
+            if (!name) { if (st) { st.style.color = 'var(--red)'; st.textContent = 'No username set.'; } return; }
+
+            CHAT.username = name;
+            CHAT.messages = [];
+            CHAT.lastTs = 0;
+
+            if (btn) btn.disabled = true;
+            if (st) { st.style.color = 'var(--text-dim)'; st.textContent = 'Connecting…'; }
+
+            fetch(CHAT_WORKER_URL + '/messages?since=0')
+                .then(r => r.json())
+                .then(data => {
+                    const initMsgs = data.messages || [];
+                    initMsgs.forEach(m => {
+                        CHAT.messages.push(m);
+                        if (m.ts > CHAT.lastTs) CHAT.lastTs = m.ts;
+                    });
+                    CHAT.onlineUsers = [];
+                    const body = document.getElementById('body-' + id);
+                    if (body) {
+                        body.innerHTML = chBuildMain(id);
+                        chRenderMsgs(id);
+                        setTimeout(() => chBindInput(id), 50);
+                    }
+                    // send heartbeat immediately so we appear online right away
+                    fetch(CHAT_WORKER_URL + '/heartbeat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: name })
+                    }).then(r => r.json()).then(data => {
+                        const online = (data.online || []).map(n => n.toLowerCase());
+                        const me = name.toLowerCase();
+                        CHAT.onlineUsers = online.filter(n => n !== me);
+                        chRenderOnline(id);
+                    }).catch(() => {});
+                    chStartPoll(id);
+                    showNotif('Chat', '🟢 Joined as ' + name);
+                })
+                .catch(() => {
+                    CHAT.username = null;
+                    if (btn) btn.disabled = false;
+                    if (st) { st.style.color = 'var(--red)'; st.textContent = 'Could not reach'; }
+                });
+        }
+
+        function chStartPoll(winId) {
+            if (CHAT.pollTimer) clearInterval(CHAT.pollTimer);
+            CHAT.pollTimer = setInterval(() => chPoll(winId), 3000);
+        }
+
+        function chPoll(winId) {
+            if (!CHAT.username) return;
+
+            // heartbeat — tells server we're online, gets back presence list
+            fetch(CHAT_WORKER_URL + '/heartbeat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: CHAT.username })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    const online = (data.online || []).map(n => n.toLowerCase());
+                    const me = CHAT.username.toLowerCase();
+                    CHAT.onlineUsers = online.filter(n => n !== me);
+                    if (CHAT.winId) chRenderOnline(CHAT.winId);
+                })
+                .catch(() => {});
+
+            // fetch full message list each poll so deletions propagate to all clients
+            fetch(CHAT_WORKER_URL + '/messages')
+                .then(r => r.json())
+                .then(data => {
+                    const serverMsgs = data.messages || [];
+                    const serverTs = new Set(serverMsgs.map(m => m.ts));
+                    // keep pending _mine messages not yet on server
+                    const maxServerTs = serverMsgs.reduce((mx, m) => Math.max(mx, m.ts), 0);
+                    const pendingMine = CHAT.messages.filter(m => m._mine && m.ts > maxServerTs);
+                    const prevCount = CHAT.messages.length;
+                    // rebuild from server + pending, filtering muted users
+                    CHAT.messages = [
+                        ...serverMsgs.filter(m => !CHAT.mutedUsers.has(m.username)),
+                        ...pendingMine
+                    ];
+                    if (maxServerTs > CHAT.lastTs) CHAT.lastTs = maxServerTs;
+                    const wid = CHAT.winId;
+                    const changed = CHAT.messages.length !== prevCount ||
+                        serverMsgs.some(m => m.ts > (CHAT.lastTs - 1));
+                    if (wid) chRenderMsgs(wid);
+                    else if (serverMsgs.length && serverMsgs[serverMsgs.length-1].ts > CHAT.lastTs - 3100) {
+                        const last = serverMsgs[serverMsgs.length-1];
+                        if (last.username !== CHAT.username)
+                            showNotif('Chat', last.username + ': ' + last.text, 2200);
+                    }
+                })
+                .catch(() => {});
+
+            // poll any open DM windows
+            chPollDMs();
+        }
+
+        const COOLDOWN_MS = 3000;
+
+        function chSend(winId) {
+            if (!CHAT.username || CHAT.cooldown) return;
+            const inp = document.getElementById('ch-inp-' + winId);
+            const btn = document.getElementById('ch-send-' + winId);
+            const fill = document.getElementById('ch-cd-' + winId);
+            if (!inp) return;
+            const text = inp.value.trim();
+            if (!text) return;
+            inp.value = '';
+
+            if (text === '/flip') {
+                const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
+                const flipText = `/flip: ${result}!`;
+                CHAT.messages.push({ username: CHAT.username, text: flipText, ts: Date.now(), _mine: true });
+                chRenderMsgs(winId);
+                fetch(CHAT_WORKER_URL + '/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: CHAT.username, text: flipText }),
+                }).catch(() => {});
+                return;
+            }
+
+            CHAT.messages.push({ username: CHAT.username, text, ts: Date.now(), _mine: true });
+            chRenderMsgs(winId);
+            chResetIdle(winId);
+
+            fetch(CHAT_WORKER_URL + '/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: CHAT.username, text }),
+            }).catch(() => showNotif('Chat', '⚠️ Message may not have sent'));
+
+            CHAT.cooldown = true;
+            if (inp) inp.disabled = true;
+            if (btn) btn.disabled = true;
+
+            const start = Date.now();
+            const tick = setInterval(() => {
+                const elapsed = Date.now() - start;
+                const pct = Math.min(100, (elapsed / COOLDOWN_MS) * 100);
+                const secs = Math.max(0, Math.ceil((COOLDOWN_MS - elapsed) / 1000));
+                if (fill) fill.style.width = pct + '%';
+                if (btn) btn.textContent = secs > 0 ? secs + 's' : 'SEND';
+                if (elapsed >= COOLDOWN_MS) {
+                    clearInterval(tick);
+                    CHAT.cooldown = false;
+                    if (inp) { inp.disabled = false; inp.focus(); }
+                    if (btn) { btn.disabled = false; btn.textContent = 'SEND'; }
+                    if (fill) fill.style.width = '0%';
+                }
+            }, 80);
+        }
+
+        function chFormatText(text) {
+            // Render @mentions as styled spans, escaping everything else
+            return chEsc(text).replace(/(@[a-zA-Z0-9_\-]{1,24})/g,
+                '<span class="ch-at">$1</span>');
+        }
+
+        function chIsPinged(text) {
+            if (!CHAT.username) return false;
+            const re = new RegExp('@' + CHAT.username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:[^a-zA-Z0-9_\-]|$)', 'i');
+            return re.test(text);
+        }
+
+        function chPingInsert(winId, username) {
+            const inp = document.getElementById('ch-inp-' + winId);
+            if (!inp) return;
+            const cur = inp.value;
+            const ping = '@' + username + ' ';
+            // if already ends with a ping for this user, don't double-insert
+            if (cur.includes('@' + username)) { inp.focus(); return; }
+            inp.value = (cur.trim() ? cur.trimEnd() + ' ' : '') + ping;
+            inp.focus();
+            inp.selectionStart = inp.selectionEnd = inp.value.length;
+        }
+
+        function chRenderMsgs(winId) {
+            const el = document.getElementById('ch-msgs-' + winId);
+            if (!el) return;
+            const wasAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+            const admin = chIsAdmin();
+            el.innerHTML = CHAT.messages.map((m, i) => {
+                const mine = m._mine || m.username === CHAT.username;
+                const entry = CHAT_USER_MAP[(m.username||'').toLowerCase()];
+                let nameStyle = '';
+                if (entry && entry.color) nameStyle = `style="color:${entry.color};font-weight:700;"`;
+                const adminBadge = (entry && entry.isAdmin) ? '<span class="ch-admin-badge" title="Admin">👑</span>' : '';
+                // left-click → DM, right-click → ping @user into input
+                const whoClick = mine ? '' : `onclick="chOpenDM('${chEsc(m.username)}')" oncontextmenu="event.preventDefault();chPingInsert('${winId}','${chEsc(m.username)}')" title="Click: DM · Right-click: Ping"`;
+                const delBtn = admin ? `<button class="ch-del-btn" onclick="chDeleteMsg(${m.ts},'${winId}')" title="Delete">✕</button>` : '';
+                const pinged = !mine && chIsPinged(m.text);
+                return `<div class="ch-msg ${mine ? 'mine' : 'theirs'}${pinged ? ' pinged' : ''}" data-ts="${m.ts}">
+                    <div class="ch-msg-who" ${nameStyle} ${whoClick}>${mine ? 'You' : chEsc(m.username)}${adminBadge}</div>
+                    <div class="ch-msg-row">
+                        ${delBtn}
+                        <div class="ch-bubble">${chFormatText(m.text)}</div>
+                    </div>
+                    <div class="ch-msg-time">${chTime(m.ts)}</div>
+                </div>`;
+            }).join('');
+            if (wasAtBottom) el.scrollTop = el.scrollHeight;
+        }
+
+        function chDeleteMsg(ts, winId) {
+            // remove from local array
+            CHAT.messages = CHAT.messages.filter(m => m.ts !== ts);
+            chRenderMsgs(winId);
+            // tell worker to delete
+            fetch(CHAT_WORKER_URL + '/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ts, username: CHAT.username })
+            }).catch(() => {});
+        }
+
+        // ── Online users (heartbeat-based) ───────────────────────────────
+        function chRenderOnline(winId) {
+            const el = document.getElementById('ch-online-' + winId);
+            if (!el) return;
+            const users = CHAT.onlineUsers || [];
+            if (!users.length) {
+                el.innerHTML = '<div class="ch-online-empty">No one else here</div>';
+                return;
+            }
+            el.innerHTML = users.map(name => {
+                const entry = CHAT_USER_MAP[name.toLowerCase()];
+                const col = entry ? entry.color : null;
+                const nameStyle = col ? `style="color:${col};"` : '';
+                const crown = (entry && entry.isAdmin) ? '👑 ' : '';
+                return `<div class="ch-online-user" onclick="chOpenDM('${chEsc(name)}')" title="DM ${chEsc(name)}">
+                    <div class="ch-online-dot-sm"></div>
+                    <span class="ch-online-name" ${nameStyle}>${crown}${chEsc(name)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function chPollDMs() {
+            Object.entries(CHAT.dms).forEach(([target, dm]) => {
+                if (!dm.winId) return;
+                fetch(CHAT_WORKER_URL + '/dm?from=' + encodeURIComponent(CHAT.username) + '&to=' + encodeURIComponent(target) + '&since=' + (dm.lastTs || 0))
+                    .then(r => r.json())
+                    .then(data => {
+                        const msgs = data.messages || [];
+                        msgs.forEach(m => {
+                            if (m.ts > (dm.lastTs || 0)) dm.lastTs = m.ts;
+                            if (m.username === CHAT.username) return; // already shown locally
+                            dm.messages.push({ from: m.username, to: target, text: m.text, ts: m.ts });
+                        });
+                        if (msgs.length) chDMRender(dm.winId, target);
+                    })
+                    .catch(() => {});
+            });
+        }
+
+        // ── DM system ────────────────────────────────────────────────────
+        function chOpenDM(target) {
+            if (!CHAT.username) return;
+            target = target.toLowerCase();
+            if (target === CHAT.username.toLowerCase()) return;
+
+            // reuse existing DM window if open
+            if (CHAT.dms[target] && CHAT.dms[target].winId) {
+                const existing = document.getElementById('win-' + CHAT.dms[target].winId);
+                if (existing) { focusWindow(CHAT.dms[target].winId); return; }
+            }
+
+            const dmId = 'dm-' + target + '-' + Date.now();
+            if (!CHAT.dms[target]) CHAT.dms[target] = { messages: [], winId: null, pollTimer: null, lastTs: 0 };
+            CHAT.dms[target].winId = dmId;
+
+            const targetColor = chUserColor(target);
+            const targetStyle = targetColor ? `color:${targetColor};font-weight:700;` : '';
+            const html = `<div class="ch-root">
+                <div class="ch-topbar ch-topbar-dm">
+                    <span style="font-size:9px;letter-spacing:1px;color:var(--accent);font-weight:700;font-family:var(--font-mono);">DM</span>
+                    <div class="ch-online-dot" style="background:#a78bfa;box-shadow:0 0 6px #a78bfa;"></div>
+                    <span style="font-size:11px;font-weight:700;font-family:var(--font-mono);${targetStyle}">${chEsc(target)}</span>
+                    <span style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);margin-left:4px;">· as ${chEsc(CHAT.username)}</span>
+                </div>
+                <div class="ch-cooldown-bar"><div class="ch-cooldown-fill" id="ch-cd-${dmId}"></div></div>
+                <div class="ch-msgs" id="ch-msgs-${dmId}">
+                    <div class="ch-msg sys"><div class="ch-bubble">stored on server · only you and ${chEsc(target)} can see this</div></div>
+                </div>
+                <div class="ch-input-bar">
+                    <input class="ch-inp" id="ch-inp-${dmId}" placeholder="Message ${chEsc(target)}… (Enter to send)" autocomplete="off" spellcheck="false" maxlength="200">
+                    <button class="ch-send" id="ch-send-${dmId}" onclick="chDMSend('${dmId}','${chEsc(target)}')">SEND</button>
+                </div>
+            </div>`;
+
+            createWindow(dmId, 'DM · ' + target, '✉️', 520, 420, html);
+            setTimeout(() => {
+                chDMRender(dmId, target);
+                const inp = document.getElementById('ch-inp-' + dmId);
+                if (inp) {
+                    inp.addEventListener('keydown', e => {
+                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chDMSend(dmId, target); }
+                    });
+                    inp.focus();
+                }
+            }, 50);
+        }
+
+        function chDMRender(dmId, target) {
+            const el = document.getElementById('ch-msgs-' + dmId);
+            if (!el) return;
+            const dm = CHAT.dms[target];
+            if (!dm || !dm.messages.length) return;
+            const wasAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+            const msgHtml = dm.messages.map(m => {
+                const mine = m.from === CHAT.username;
+                const col = chUserColor(m.from);
+                const nameStyle = col ? `style="color:${col};font-weight:700;"` : '';
+                return `<div class="ch-msg ${mine ? 'mine' : 'theirs'}">
+                    <div class="ch-msg-who" ${nameStyle}>${mine ? 'You' : chEsc(m.from)}</div>
+                    <div class="ch-msg-row"><div class="ch-bubble">${chEsc(m.text)}</div></div>
+                    <div class="ch-msg-time">${chTime(m.ts)}</div>
+                </div>`;
+            }).join('');
+            // replace only the non-sys messages (keep the local-only notice)
+            const sysMsg = el.querySelector('.ch-msg.sys');
+            el.innerHTML = (sysMsg ? sysMsg.outerHTML : '') + msgHtml;
+            if (wasAtBottom) el.scrollTop = el.scrollHeight;
+        }
+
+        function chDMSend(dmId, target) {
+            target = target.toLowerCase();
+            const dm = CHAT.dms[target];
+            if (dm && dm.cooldown) return;
+
+            const inp = document.getElementById('ch-inp-' + dmId);
+            const btn = document.getElementById('ch-send-' + dmId);
+            const fill = document.getElementById('ch-cd-' + dmId);
+            if (!inp) return;
+            const text = inp.value.trim();
+            if (!text || !CHAT.username) return;
+            inp.value = '';
+
+            if (!CHAT.dms[target]) CHAT.dms[target] = { messages: [], winId: dmId, lastTs: 0, cooldown: false };
+            const dmObj = CHAT.dms[target];
+            dmObj.messages.push({ from: CHAT.username, to: target, text, ts: Date.now() });
+            chDMRender(dmId, target);
+
+            fetch(CHAT_WORKER_URL + '/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: CHAT.username, text, dm_to: target })
+            }).catch(() => {});
+
+            // cooldown
+            dmObj.cooldown = true;
+            if (inp) inp.disabled = true;
+            if (btn) btn.disabled = true;
+            const start = Date.now();
+            const tick = setInterval(() => {
+                const elapsed = Date.now() - start;
+                const pct = Math.min(100, (elapsed / COOLDOWN_MS) * 100);
+                const secs = Math.max(0, Math.ceil((COOLDOWN_MS - elapsed) / 1000));
+                if (fill) fill.style.width = pct + '%';
+                if (btn) btn.textContent = secs > 0 ? secs + 's' : 'SEND';
+                if (elapsed >= COOLDOWN_MS) {
+                    clearInterval(tick);
+                    dmObj.cooldown = false;
+                    if (inp) { inp.disabled = false; inp.focus(); }
+                    if (btn) { btn.disabled = false; btn.textContent = 'SEND'; }
+                    if (fill) fill.style.width = '0%';
+                }
+            }, 80);
+        }
+
+        // incoming DM handling in poll — route dm messages to the right DM window
+        function chHandleIncomingDM(m) {
+            const from = (m.username||'').toLowerCase();
+            if (!CHAT.dms[from]) CHAT.dms[from] = { messages: [], winId: null, pollTimer: null, lastTs: 0 };
+            CHAT.dms[from].messages.push({ from, to: CHAT.username, text: m.text, ts: m.ts });
+            const dmId = CHAT.dms[from].winId;
+            if (dmId && document.getElementById('ch-msgs-' + dmId)) {
+                chDMRender(dmId, from);
+            } else {
+                showNotif('DM from ' + from, m.text, 3000);
+            }
+        }
+
+        // get out of here and le leave
+        function chLeave(winId, silent) {
+            if (CHAT.pollTimer) { clearInterval(CHAT.pollTimer); CHAT.pollTimer = null; }
+            chClearIdle();
+            CHAT.username = null; CHAT.messages = []; CHAT.lastTs = 0; CHAT.cooldown = false; CHAT.onlineUsers = []; CHAT.dms = {};
+            const body = document.getElementById('body-' + winId);
+            if (body) {
+                body.innerHTML = chBuildSetup(winId);
+                setTimeout(() => { const i = document.getElementById('ch-uname-' + winId); if (i) i.focus(); }, 50);
+            }
+            if (!silent) showNotif('Chat', '🔴 Left the lobby');
+        }
+
+        const IDLE_MS = 25000;
+
+        function chResetIdle(winId) {
+            chClearIdle();
+            if (!CHAT.username) return;
+            CHAT.idleTimer = setTimeout(() => {
+                chLeave(winId || CHAT.winId, true);
+            }, IDLE_MS);
+        }
+
+        function chClearIdle() {
+            if (CHAT.idleTimer) { clearTimeout(CHAT.idleTimer); CHAT.idleTimer = null; }
+        }
+
+        function chBindInput(winId) {
+            const msg = document.getElementById('ch-inp-' + winId);
+            const join = document.getElementById('ch-uname-' + winId);
+            if (msg) msg.addEventListener('keydown', e => {
+                chResetIdle(winId);
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chSend(winId); }
+            });
+            if (join) join.addEventListener('keydown', e => { if (e.key === 'Enter') chJoin(winId); });
+            if (msg) msg.focus();
+            chResetIdle(winId);
+        }
+
+        (function () {
+            const s = document.createElement('style');
+            s.textContent = `
+                            .sv-root { display:flex; flex-direction:column; height:100%; background:var(--bg); font-family:var(--font-ui); user-select:none; }
+                            .sv-toolbar { display:flex; align-items:center; gap:12px; padding:10px 16px; background:var(--surface2); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
+                            .sv-label { font-size:10px; font-weight:700; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; }
+                            .sv-count-inp { width:64px; background:var(--bg); border:1px solid var(--border2); color:var(--text); border-radius:5px; padding:4px 8px; font-family:var(--font-mono); font-size:12px; outline:none; text-align:center; }
+                            .sv-count-inp:focus { border-color:var(--accent); }
+                            .sv-sep { width:1px; height:22px; background:var(--border2); }
+                            .sv-btn { padding:5px 14px; border-radius:5px; font-size:11px; font-weight:700; font-family:var(--font-ui); letter-spacing:.5px; border:1px solid var(--border2); background:var(--surface3); color:var(--text-dim); cursor:pointer; transition:all .12s; }
+                            .sv-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+                            .sv-btn:disabled { opacity:.35; cursor:not-allowed; }
+                            .sv-btn.primary { background:var(--accent); border-color:var(--accent); color:#000; font-weight:800; }
+                            .sv-btn.primary:hover:not(:disabled) { opacity:.88; color:#000; }
+                            .sv-btn.danger { border-color:var(--red); color:var(--red); }
+                            .sv-btn.danger:hover:not(:disabled) { background:rgba(248,81,73,.12); }
+                            .sv-algo-select { background:var(--bg); border:1px solid var(--border2); color:var(--text); border-radius:5px; padding:4px 8px; font-family:var(--font-ui); font-size:11px; font-weight:600; outline:none; cursor:pointer; }
+                            .sv-stats { margin-left:auto; display:flex; gap:16px; align-items:center; }
+                            .sv-stat { font-family:var(--font-mono); font-size:10px; color:var(--text-dim); }
+                            .sv-stat span { color:var(--accent); }
+                            .sv-canvas-wrap { flex:1; position:relative; overflow:hidden; padding:16px 16px 8px; }
+                            .sv-canvas { width:100%; height:100%; display:block; }
+                            .sv-footer { padding:5px 16px; border-top:1px solid var(--border); background:var(--surface2); font-family:var(--font-mono); font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-shrink:0; }
+                            .sv-status-dot { width:7px; height:7px; border-radius:50%; background:var(--text-muted); flex-shrink:0; transition:background .2s; }
+                            .sv-status-dot.running { background:var(--accent3); }
+                            .sv-status-dot.done { background:var(--accent); }
+                        `;
+            document.head.appendChild(s);
+        })();
+
+        const SORT_STATE = {};
+
+        function openSort() {
+            const id = 'sort-' + Date.now();
+            const html = `
+                            <div class="sv-root" id="sv-root-${id}">
+                                <div class="sv-toolbar">
+                                    <div class="sv-label">Tiles</div>
+                                    <input class="sv-count-inp" id="sv-n-${id}" type="number" min="2" max="200" value="10">
+                                    <div class="sv-sep"></div>
+                                    <div class="sv-label">Algorithm</div>
+                                    <select class="sv-algo-select" id="sv-algo-${id}">
+                                        <option value="insertion">Insertion Sort</option>
+                                        <option value="bubble">Bubble Sort</option>
+                                        <option value="selection">Selection Sort</option>
+                                        <option value="quick">Quick Sort</option>
+                                        <option value="merge">Merge Sort</option>
+                                        <option value="heap">Heap Sort</option>
+                                        <option value="shell">Shell Sort</option>
+                                        <option value="cocktail">Cocktail Sort</option>
+                                        <option value="bogo">Bogo Sort 🎲</option>
+                                    </select>
+                                    <div class="sv-sep"></div>
+                                    <button class="sv-btn" id="sv-rand-${id}" onclick="svRandomize('${id}')">Randomize</button>
+                                    <button class="sv-btn primary" id="sv-go-${id}" onclick="svStart('${id}')">Sort</button>
+                                    <button class="sv-btn danger" id="sv-stop-${id}" onclick="svStop('${id}')" disabled>Stop</button>
+                                    <div class="sv-stats">
+                                        <div class="sv-stat">Comparisons: <span id="sv-cmp-${id}">0</span></div>
+                                        <div class="sv-stat">Moves: <span id="sv-mov-${id}">0</span></div>
+                                        <div class="sv-stat">Time: <span id="sv-time-${id}">0.0s</span></div>
+                                    </div>
+                                </div>
+                                <div class="sv-canvas-wrap">
+                                    <canvas class="sv-canvas" id="sv-cv-${id}"></canvas>
+                                </div>
+                                <div class="sv-footer">
+                                    <div class="sv-status-dot" id="sv-dot-${id}"></div>
+                                    <span id="sv-msg-${id}">Randomize to begin</span>
+                                </div>
+                            </div>`;
+            createWindow(id, 'Sort Visualizer', '📊', 720, 460, html);
+            setTimeout(() => svInit(id), 40);
+        }
+
+        function svInit(id) {
+            const n = parseInt(document.getElementById('sv-n-' + id).value) || 10;
+            SORT_STATE[id] = {
+                arr: [],
+                n,
+                running: false,
+                stopFlag: false,
+                comparisons: 0,
+                moves: 0,
+                startTime: 0,
+                highlighted: -1,
+                comparing: -1,
+                pivot: -1,
+                rangeStart: -1,
+                rangeEnd: -1,
+                sorted: new Set(),
+                audioCtx: null,
+            };
+            svGenSorted(id);
+            svDraw(id);
+            svSetMsg(id, 'Randomize to begin', '');
+        }
+
+        function svGenSorted(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            st.n = Math.max(2, Math.min(200, parseInt(document.getElementById('sv-n-' + id).value) || 10));
+            st.arr = Array.from({ length: st.n }, (_, i) => i + 1);
+            st.sorted = new Set(st.arr.map((_, i) => i));
+            st.comparisons = 0; st.moves = 0;
+            svUpdateStats(id);
+        }
+
+        function svRandomize(id) {
+            if (SORT_STATE[id] && SORT_STATE[id].running) return;
+            const st = SORT_STATE[id];
+            if (!st) return;
+            st.n = Math.max(2, Math.min(200, parseInt(document.getElementById('sv-n-' + id).value) || 10));
+            st.arr = Array.from({ length: st.n }, (_, i) => i + 1);
+            for (let i = st.arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [st.arr[i], st.arr[j]] = [st.arr[j], st.arr[i]];
+            }
+            st.sorted = new Set();
+            st.highlighted = -1; st.comparing = -1;
+            st.comparisons = 0; st.moves = 0;
+            svUpdateStats(id);
+            svDraw(id);
+            svSetMsg(id, 'Ready — press Sort', '');
+            document.getElementById('sv-go-' + id).disabled = false;
+        }
+
+        function svStart(id) {
+            const st = SORT_STATE[id];
+            if (!st || st.running || st.arr.length === 0) return;
+            st.running = true; st.stopFlag = false;
+            st.comparisons = 0; st.moves = 0; st.startTime = Date.now();
+            document.getElementById('sv-go-' + id).disabled = true;
+            document.getElementById('sv-rand-' + id).disabled = true;
+            document.getElementById('sv-stop-' + id).disabled = false;
+            document.getElementById('sv-n-' + id).disabled = true;
+            svSetMsg(id, 'Sorting…', 'running');
+            const algo = document.getElementById('sv-algo-' + id).value;
+            if (algo === 'insertion') svInsertionSort(id);
+            else if (algo === 'bubble') svBubbleSort(id);
+            else if (algo === 'selection') svSelectionSort(id);
+            else if (algo === 'quick') svQuickSort(id);
+            else if (algo === 'merge') svMergeSort(id);
+            else if (algo === 'heap') svHeapSort(id);
+            else if (algo === 'shell') svShellSort(id);
+            else if (algo === 'cocktail') svCocktailSort(id);
+            else if (algo === 'bogo') svBogoSort(id);
+        }
+
+        function svStop(id) {
+            const st = SORT_STATE[id];
+            if (st) st.stopFlag = true;
+        }
+
+        function svFinish(id, cancelled) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            st.running = false; st.highlighted = -1; st.comparing = -1; st.pivot = -1; st.rangeStart = -1; st.rangeEnd = -1;
+            if (!cancelled) {
+                st.sorted = new Set(st.arr.map((_, i) => i));
+                svSetMsg(id, `Done — ${st.comparisons} comparisons, ${st.moves} moves`, 'done');
+                svPlayFinish(id);
+            } else {
+                svSetMsg(id, 'Stopped', '');
+            }
+            svDraw(id);
+            svUpdateStats(id);
+            if (document.getElementById('sv-go-' + id)) {
+                document.getElementById('sv-go-' + id).disabled = false;
+                document.getElementById('sv-rand-' + id).disabled = false;
+                document.getElementById('sv-stop-' + id).disabled = true;
+                document.getElementById('sv-n-' + id).disabled = false;
+            }
+        }
+
+        async function svInsertionSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+            const n = arr.length;
+
+            for (let i = 1; i < n; i++) {
+                if (st.stopFlag) { svFinish(id, true); return; }
+                const key = arr[i];
+                st.highlighted = i;
+                st.comparing = -1;
+                svBeep(id);
+                svDraw(id);
+                await svDelay(500);
+
+                let j = i - 1;
+                while (j >= 0) {
+                    if (st.stopFlag) { svFinish(id, true); return; }
+                    st.comparing = j;
+                    st.comparisons++;
+                    svUpdateStats(id);
+                    svBeep(id);
+                    svDraw(id);
+                    await svDelay(500);
+
+                    if (arr[j] > key) {
+                        const displaced = arr[j + 1];
+                        await svAnimateShift(id, j, j + 1);
+                        if (st.stopFlag) { svFinish(id, true); return; }
+                        arr[j + 1] = arr[j];
+                        arr[j] = displaced;
+                        st.moves++;
+                        svUpdateStats(id);
+                        j--;
+                    } else {
+                        break;
+                    }
+                }
+                arr[j + 1] = key;
+                st.moves++;
+                st.comparing = -1;
+                st.highlighted = j + 1;
+                st.sorted.add(j + 1);
+                svUpdateStats(id);
+                svDraw(id);
+                await svDelay(250);
+            }
+            svFinish(id, false);
+        }
+
+        function svAnimateShift(id, fromIdx, toIdx) {
+            return new Promise(resolve => {
+                const st = SORT_STATE[id];
+                const canvas = document.getElementById('sv-cv-' + id);
+                if (!st || !canvas) { resolve(); return; }
+
+                const wrap = canvas.parentElement;
+                const W = wrap.clientWidth - 32;
+                const H = wrap.clientHeight - 24;
+                canvas.width = W;
+                canvas.height = H;
+
+                const n = st.arr.length;
+                const gap = 3;
+                const barW = Math.max(4, (W - gap * (n - 1)) / n);
+                const slotW = barW + gap;
+                const maxVal = n;
+
+                const snapFrom = st.arr[fromIdx];
+                const snapTo = st.arr[toIdx];
+
+                const DURATION = 500;
+                const start = performance.now();
+
+                function frame(now) {
+                    if (st.stopFlag) { resolve(); return; }
+                    const t = Math.min((now - start) / DURATION, 1);
+                    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, W, H);
+
+                    for (let i = 0; i < n; i++) {
+                        if (i === fromIdx || i === toIdx) continue;
+
+                        const val = st.arr[i];
+                        const barH = Math.round((val / maxVal) * (H - 4));
+                        const x = i * slotW;
+                        const y = H - barH;
+
+                        ctx.fillStyle = st.sorted.has(i) ? '#3fb950' : '#3d444d';
+                        ctx.beginPath();
+                        ctx.roundRect(x, y, barW, barH, 2);
+                        ctx.fill();
+                    }
+
+                    const toH = Math.round((snapTo / maxVal) * (H - 4));
+                    const toX = toIdx * slotW - ease * slotW;
+                    ctx.fillStyle = '#f85149';
+                    ctx.beginPath();
+                    ctx.roundRect(toX, H - toH, barW, toH, 2);
+                    ctx.fill();
+
+                    const fromH = Math.round((snapFrom / maxVal) * (H - 4));
+                    const fromX = fromIdx * slotW + ease * slotW;
+                    ctx.fillStyle = '#58a6ff';
+                    ctx.beginPath();
+                    ctx.roundRect(fromX, H - fromH, barW, fromH, 2);
+                    ctx.fill();
+
+                    if (t < 1) {
+                        requestAnimationFrame(frame);
+                    } else {
+                        resolve();
+                    }
+                }
+
+                requestAnimationFrame(frame);
+            });
+        }
+
+        function svAnimateSwap(id, fromIdx, toIdx) {
+            return new Promise(resolve => {
+                const st = SORT_STATE[id];
+                const canvas = document.getElementById('sv-cv-' + id);
+                if (!st || !canvas) { resolve(); return; }
+
+                const wrap = canvas.parentElement;
+                const W = wrap.clientWidth - 32;
+                const H = wrap.clientHeight - 24;
+                canvas.width = W;
+                canvas.height = H;
+
+                const n = st.arr.length;
+                const gap = 3;
+                const barW = Math.max(4, (W - gap * (n - 1)) / n);
+                const slotW = barW + gap;
+                const maxVal = n;
+
+                const snapFrom = st.arr[fromIdx];
+                const snapTo = st.arr[toIdx];
+                const dist = (toIdx - fromIdx) * slotW;
+                const DURATION = Math.min(700, 300 + Math.abs(toIdx - fromIdx) * 18);
+                const start = performance.now();
+
+                function frame(now) {
+                    if (st.stopFlag) { resolve(); return; }
+                    const t = Math.min((now - start) / DURATION, 1);
+                    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, W, H);
+
+                    for (let i = 0; i < n; i++) {
+                        if (i === fromIdx || i === toIdx) continue;
+                        const val = st.arr[i];
+                        const barH = Math.round((val / maxVal) * (H - 4));
+                        const x = i * slotW;
+                        if (i === st.pivot) ctx.fillStyle = '#f5a623';
+                        else if (st.sorted.has(i)) ctx.fillStyle = '#3fb950';
+                        else ctx.fillStyle = '#3d444d';
+                        ctx.beginPath();
+                        ctx.roundRect(x, H - barH, barW, barH, 2);
+                        ctx.fill();
+                    }
+
+                    const toH = Math.round((snapTo / maxVal) * (H - 4));
+                    ctx.fillStyle = '#f85149';
+                    ctx.beginPath();
+                    ctx.roundRect(toIdx * slotW - ease * dist, H - toH, barW, toH, 2);
+                    ctx.fill();
+
+                    const fromH = Math.round((snapFrom / maxVal) * (H - 4));
+                    ctx.fillStyle = '#58a6ff';
+                    ctx.beginPath();
+                    ctx.roundRect(fromIdx * slotW + ease * dist, H - fromH, barW, fromH, 2);
+                    ctx.fill();
+
+                    if (t < 1) requestAnimationFrame(frame);
+                    else resolve();
+                }
+
+                requestAnimationFrame(frame);
+            });
+        }
+
+        async function svBubbleSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+            const n = arr.length;
+
+            for (let i = 0; i < n - 1; i++) {
+                let swapped = false;
+                for (let j = 0; j < n - 1 - i; j++) {
+                    if (st.stopFlag) { svFinish(id, true); return; }
+                    st.highlighted = j;
+                    st.comparing = j + 1;
+                    st.comparisons++;
+                    svUpdateStats(id);
+                    svBeep(id);
+                    svDraw(id);
+                    await svDelay(300);
+
+                    if (arr[j] > arr[j + 1]) {
+                        const displaced = arr[j + 1];
+                        await svAnimateShift(id, j, j + 1);
+                        if (st.stopFlag) { svFinish(id, true); return; }
+                        arr[j + 1] = arr[j];
+                        arr[j] = displaced;
+                        st.moves++;
+                        svUpdateStats(id);
+                        swapped = true;
+                    }
+                }
+                st.sorted.add(n - 1 - i);
+                st.highlighted = -1; st.comparing = -1;
+                svDraw(id);
+                if (!swapped) break;
+            }
+            for (let i = 0; i < n; i++) st.sorted.add(i);
+            svFinish(id, false);
+        }
+
+        async function svSelectionSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+            const n = arr.length;
+
+            for (let i = 0; i < n - 1; i++) {
+                if (st.stopFlag) { svFinish(id, true); return; }
+                let minIdx = i;
+                st.highlighted = i;
+
+                for (let j = i + 1; j < n; j++) {
+                    if (st.stopFlag) { svFinish(id, true); return; }
+                    st.comparing = j;
+                    st.comparisons++;
+                    svUpdateStats(id);
+                    svBeep(id);
+                    svDraw(id);
+                    await svDelay(300);
+
+                    if (arr[j] < arr[minIdx]) {
+                        minIdx = j;
+                        st.highlighted = minIdx;
+                    }
+                }
+
+                if (minIdx !== i) {
+                    await svAnimateSwap(id, i, minIdx);
+                    if (st.stopFlag) { svFinish(id, true); return; }
+                    [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+                    st.moves++;
+                    svUpdateStats(id);
+                }
+                st.sorted.add(i);
+                st.comparing = -1;
+                svDraw(id);
+                await svDelay(150);
+            }
+            st.sorted.add(n - 1);
+            svFinish(id, false);
+        }
+
+        async function svQuickSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+
+            async function partition(lo, hi) {
+                st.pivot = hi;
+                let i = lo - 1;
+                for (let j = lo; j < hi; j++) {
+                    if (st.stopFlag) return -1;
+                    st.highlighted = j;
+                    st.comparing = hi;
+                    st.comparisons++;
+                    svUpdateStats(id);
+                    svBeep(id);
+                    svDraw(id);
+                    await svDelay(300);
+
+                    if (arr[j] <= arr[hi]) {
+                        i++;
+                        if (i !== j) {
+                            await svAnimateSwap(id, i, j);
+                            if (st.stopFlag) return -1;
+                            [arr[i], arr[j]] = [arr[j], arr[i]];
+                            st.moves++;
+                            svUpdateStats(id);
+                        }
+                    }
+                }
+                const p = i + 1;
+                if (p !== hi) {
+                    await svAnimateSwap(id, p, hi);
+                    if (st.stopFlag) return -1;
+                    [arr[p], arr[hi]] = [arr[hi], arr[p]];
+                    st.moves++;
+                    svUpdateStats(id);
+                }
+                st.sorted.add(p);
+                st.pivot = -1;
+                st.highlighted = -1; st.comparing = -1;
+                svDraw(id);
+                await svDelay(150);
+                return p;
+            }
+
+            async function qsort(lo, hi) {
+                if (lo >= hi || st.stopFlag) return;
+                const p = await partition(lo, hi);
+                if (p === -1 || st.stopFlag) return;
+                await qsort(lo, p - 1);
+                await qsort(p + 1, hi);
+            }
+
+            await qsort(0, arr.length - 1);
+            if (st.stopFlag) { svFinish(id, true); return; }
+            for (let i = 0; i < arr.length; i++) st.sorted.add(i);
+            svFinish(id, false);
+        }
+
+        async function svMergeSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+            st.sorted = new Set();
+
+            async function merge(lo, mid, hi) {
+                const left = arr.slice(lo, mid + 1);
+                const right = arr.slice(mid + 1, hi + 1);
+                st.rangeStart = lo; st.rangeEnd = hi;
+                let i = 0, j = 0, k = lo;
+                while (i < left.length && j < right.length) {
+                    if (st.stopFlag) return;
+                    st.highlighted = lo + i;
+                    st.comparing = mid + 1 + j;
+                    st.comparisons++;
+                    svUpdateStats(id);
+                    svBeep(id);
+                    svDraw(id);
+                    await svDelay(260);
+                    if (left[i] <= right[j]) { arr[k++] = left[i++]; }
+                    else { arr[k++] = right[j++]; }
+                    st.moves++;
+                }
+                while (i < left.length) { if (st.stopFlag) return; arr[k++] = left[i++]; st.moves++; }
+                while (j < right.length) { if (st.stopFlag) return; arr[k++] = right[j++]; st.moves++; }
+                for (let x = lo; x <= hi; x++) st.sorted.add(x);
+                st.highlighted = -1; st.comparing = -1;
+                svUpdateStats(id);
+                svDraw(id);
+                await svDelay(120);
+            }
+
+            async function msort(lo, hi) {
+                if (lo >= hi || st.stopFlag) return;
+                const mid = Math.floor((lo + hi) / 2);
+                await msort(lo, mid);
+                if (st.stopFlag) return;
+                await msort(mid + 1, hi);
+                if (st.stopFlag) return;
+                await merge(lo, mid, hi);
+            }
+
+            await msort(0, arr.length - 1);
+            if (st.stopFlag) { svFinish(id, true); return; }
+            svFinish(id, false);
+        }
+
+        async function svHeapSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+            const n = arr.length;
+
+            async function siftDown(root, end) {
+                let r = root;
+                while (r * 2 + 1 <= end) {
+                    if (st.stopFlag) return;
+                    let child = r * 2 + 1;
+                    if (child + 1 <= end && arr[child] < arr[child + 1]) child++;
+                    st.highlighted = r; st.comparing = child;
+                    st.comparisons++;
+                    svUpdateStats(id); svBeep(id); svDraw(id);
+                    await svDelay(260);
+                    if (arr[r] < arr[child]) {
+                        await svAnimateSwap(id, r, child);
+                        if (st.stopFlag) return;
+                        [arr[r], arr[child]] = [arr[child], arr[r]];
+                        st.moves++;
+                        svUpdateStats(id);
+                        r = child;
+                    } else break;
+                }
+            }
+
+            for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+                if (st.stopFlag) { svFinish(id, true); return; }
+                await siftDown(i, n - 1);
+            }
+            for (let end = n - 1; end > 0; end--) {
+                if (st.stopFlag) { svFinish(id, true); return; }
+                await svAnimateSwap(id, 0, end);
+                if (st.stopFlag) { svFinish(id, true); return; }
+                [arr[0], arr[end]] = [arr[end], arr[0]];
+                st.moves++;
+                st.sorted.add(end);
+                svUpdateStats(id); svDraw(id);
+                await siftDown(0, end - 1);
+            }
+            st.sorted.add(0);
+            svFinish(id, false);
+        }
+
+        async function svShellSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+            const n = arr.length;
+            let gap = Math.floor(n / 2);
+
+            while (gap > 0) {
+                for (let i = gap; i < n; i++) {
+                    if (st.stopFlag) { svFinish(id, true); return; }
+                    let j = i;
+                    st.highlighted = j; st.comparing = j - gap;
+                    st.comparisons++;
+                    svUpdateStats(id); svBeep(id); svDraw(id);
+                    await svDelay(260);
+                    while (j >= gap && arr[j - gap] > arr[j]) {
+                        if (st.stopFlag) { svFinish(id, true); return; }
+                        await svAnimateSwap(id, j - gap, j);
+                        if (st.stopFlag) { svFinish(id, true); return; }
+                        [arr[j - gap], arr[j]] = [arr[j], arr[j - gap]];
+                        st.moves++;
+                        j -= gap;
+                        if (j >= gap) {
+                            st.highlighted = j; st.comparing = j - gap;
+                            st.comparisons++;
+                            svUpdateStats(id); svBeep(id); svDraw(id);
+                            await svDelay(200);
+                        }
+                    }
+                }
+                gap = Math.floor(gap / 2);
+            }
+            if (st.stopFlag) { svFinish(id, true); return; }
+            svFinish(id, false);
+        }
+
+        async function svCocktailSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+            const n = arr.length;
+            let lo = 0, hi = n - 1, swapped = true;
+
+            while (swapped && lo < hi) {
+                swapped = false;
+                for (let j = lo; j < hi; j++) {
+                    if (st.stopFlag) { svFinish(id, true); return; }
+                    st.highlighted = j; st.comparing = j + 1;
+                    st.comparisons++;
+                    svUpdateStats(id); svBeep(id); svDraw(id);
+                    await svDelay(260);
+                    if (arr[j] > arr[j + 1]) {
+                        const d = arr[j + 1];
+                        await svAnimateShift(id, j, j + 1);
+                        if (st.stopFlag) { svFinish(id, true); return; }
+                        arr[j + 1] = arr[j]; arr[j] = d;
+                        st.moves++; swapped = true;
+                        svUpdateStats(id);
+                    }
+                }
+                st.sorted.add(hi--);
+                if (!swapped) break;
+                swapped = false;
+                for (let j = hi; j > lo; j--) {
+                    if (st.stopFlag) { svFinish(id, true); return; }
+                    st.highlighted = j; st.comparing = j - 1;
+                    st.comparisons++;
+                    svUpdateStats(id); svBeep(id); svDraw(id);
+                    await svDelay(260);
+                    if (arr[j] < arr[j - 1]) {
+                        const d = arr[j - 1];
+                        await svAnimateShift(id, j - 1, j);
+                        if (st.stopFlag) { svFinish(id, true); return; }
+                        arr[j - 1] = arr[j]; arr[j] = d;
+                        st.moves++; swapped = true;
+                        svUpdateStats(id);
+                    }
+                }
+                st.sorted.add(lo++);
+            }
+            for (let i = 0; i < n; i++) st.sorted.add(i);
+            svFinish(id, false);
+        }
+
+        async function svBogoSort(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const arr = st.arr;
+
+            const a = st.arr;
+            let attempts = 0;
+            const isSorted = () => { for (let i = 1; i < a.length; i++) if (a[i] < a[i - 1]) return false; return true; };
+            const shuffle = () => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } };
+
+            while (!isSorted()) {
+                if (st.stopFlag) { svFinish(id, true); return; }
+                if (++attempts > 100000) {
+                    svSetMsg(id, `Gave up after 100,000 attempts 💀`, 'done');
+                    st.running = false;
+                    const go = document.getElementById('sv-go-' + id);
+                    const rand = document.getElementById('sv-rand-' + id);
+                    const stop = document.getElementById('sv-stop-' + id);
+                    const n = document.getElementById('sv-n-' + id);
+                    if (go) go.disabled = false;
+                    if (rand) rand.disabled = false;
+                    if (stop) stop.disabled = true;
+                    if (n) n.disabled = false;
+                    svDraw(id);
+                    return;
+                }
+                shuffle();
+                st.comparisons++;
+                st.moves += a.length;
+                svUpdateStats(id);
+                svSetMsg(id, `Attempt #${attempts}… 🎲`, 'running');
+                svDraw(id);
+                await svDelay(80);
+            }
+            svFinish(id, false);
+        }
+
+        function svDelay(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        function svPlayFinish(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            try {
+                if (!st.audioCtx) st.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = st.audioCtx;
+                const notes = [261.63, 392.00, 523.25];
+                const spacing = 0.28;
+                const fadein = 0.06;
+                const sustain = 0.18;
+                const fadeout = 0.20;
+                notes.forEach((freq, i) => {
+                    const t = ctx.currentTime + i * spacing;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(0.22, t + fadein);
+                    gain.gain.setValueAtTime(0.22, t + fadein + sustain);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + fadein + sustain + fadeout);
+                    osc.start(t);
+                    osc.stop(t + fadein + sustain + fadeout + 0.01);
+                });
+            } catch (e) { }
+        }
+
+        function svBeep(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            try {
+                if (!st.audioCtx) st.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = st.audioCtx;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.setValueAtTime(500, ctx.currentTime);
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.18);
+            } catch (e) { }
+        }
+
+        function svDraw(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const canvas = document.getElementById('sv-cv-' + id);
+            if (!canvas) return;
+            const wrap = canvas.parentElement;
+            canvas.width = wrap.clientWidth - 32;
+            canvas.height = wrap.clientHeight - 24;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            const n = st.arr.length;
+            if (n === 0) return;
+            ctx.clearRect(0, 0, W, H);
+            const gap = 3;
+            const barW = Math.max(4, (W - gap * (n - 1)) / n);
+            const slotW = barW + gap;
+            const maxVal = n;
+            if (st.rangeStart >= 0 && st.rangeEnd >= st.rangeStart) {
+                const rx = st.rangeStart * slotW;
+                const rw = (st.rangeEnd - st.rangeStart) * slotW + barW;
+                ctx.fillStyle = 'rgba(88,166,255,0.07)';
+                ctx.fillRect(rx, 0, rw, H);
+            }
+            for (let i = 0; i < n; i++) {
+                const barH = Math.round((st.arr[i] / maxVal) * (H - 4));
+                const x = i * slotW;
+                const y = H - barH;
+                if (i === st.highlighted) {
+                    ctx.fillStyle = '#58a6ff';
+                } else if (i === st.pivot) {
+                    ctx.fillStyle = '#f5a623';
+                } else if (i === st.comparing) {
+                    ctx.fillStyle = '#f85149';
+                } else if (st.sorted.has(i)) {
+                    ctx.fillStyle = '#3fb950';
+                } else {
+                    ctx.fillStyle = '#3d444d';
+                }
+                ctx.beginPath();
+                ctx.roundRect(x, y, barW, barH, 2);
+                ctx.fill();
+            }
+        }
+
+        function svUpdateStats(id) {
+            const st = SORT_STATE[id];
+            if (!st) return;
+            const cmpEl = document.getElementById('sv-cmp-' + id);
+            const movEl = document.getElementById('sv-mov-' + id);
+            const timeEl = document.getElementById('sv-time-' + id);
+            if (cmpEl) cmpEl.textContent = st.comparisons;
+            if (movEl) movEl.textContent = st.moves;
+            if (timeEl && st.startTime) timeEl.textContent = ((Date.now() - st.startTime) / 1000).toFixed(1) + 's';
+        }
+
+        function svSetMsg(id, msg, state) {
+            const dot = document.getElementById('sv-dot-' + id);
+            const msgEl = document.getElementById('sv-msg-' + id);
+            if (msgEl) msgEl.textContent = msg;
+            if (dot) dot.className = 'sv-status-dot' + (state ? ' ' + state : '');
+        }
+
+    </script>
+</body>
+</html>

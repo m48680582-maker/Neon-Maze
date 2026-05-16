@@ -1,0 +1,705 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Classroom</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0d0f1c 0%, #111628 18%, #0e1535 36%, #0a1245 52%, #0d1a55 68%, #0a1640 84%, #080e28 100%);
+            animation: gradShift 20s ease-in-out infinite alternate;
+            background-size: 300% 300%;
+        }
+
+        @keyframes gradShift {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 30% 100%;
+            }
+        }
+
+        #stars {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #grain {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.22;
+            animation: grainShift 0.12s steps(1) infinite;
+        }
+
+        @keyframes grainShift {
+            0% {
+                transform: translate(0,0);
+            }
+
+            25% {
+                transform: translate(-2px,1px);
+            }
+
+            50% {
+                transform: translate(1px,-2px);
+            }
+
+            75% {
+                transform: translate(2px,1px);
+            }
+
+            100% {
+                transform: translate(-1px,2px);
+            }
+        }
+
+        .center {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 48px;
+            z-index: 10;
+        }
+
+        .title-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+        }
+
+        .title-logo {
+            font-size: 15px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: rgba(140,170,255,0.55);
+            font-family: system-ui,sans-serif;
+            font-weight: 500;
+        }
+
+        .title-main {
+            font-size: 62px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            font-family: system-ui,sans-serif;
+            background: linear-gradient(135deg,#a8c4ff 0%,#7fa8f8 40%,#c4b0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .title-sub {
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(160,185,255,0.38);
+            font-family: system-ui,sans-serif;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        .btn-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            position: relative;
+            overflow: hidden;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            font-family: system-ui,sans-serif;
+            font-weight: 700;
+            border-radius: 12px;
+            transition: transform .15s, box-shadow .15s, filter .15s;
+            -webkit-tap-highlight-color: transparent;
+            letter-spacing: .4px;
+        }
+
+            .btn:active {
+                transform: scale(0.96);
+            }
+
+        .btn-primary {
+            padding: 16px 40px;
+            font-size: 15px;
+            background: linear-gradient(135deg,#3d7eff 0%,#2a5fd4 60%,#1e4bbf 100%);
+            color: #fff;
+            box-shadow: 0 0 0 1px rgba(100,160,255,0.25), 0 4px 24px rgba(50,100,255,0.45), 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+            .btn-primary:hover {
+                filter: brightness(1.12);
+                box-shadow: 0 0 0 1px rgba(100,160,255,0.4), 0 6px 32px rgba(50,100,255,0.6), 0 1px 4px rgba(0,0,0,0.4);
+                transform: translateY(-1px);
+            }
+
+        .btn-secondary {
+            padding: 15px 32px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(190,210,255,0.82);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 2px 12px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+        }
+
+            .btn-secondary:hover {
+                background: rgba(255,255,255,0.10);
+                color: rgba(210,225,255,0.95);
+                box-shadow: 0 0 0 1px rgba(255,255,255,0.18), 0 4px 18px rgba(0,0,0,0.35);
+                transform: translateY(-1px);
+            }
+
+        .ripple {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            border: 1px solid rgba(100,160,255,0.25);
+            animation: rippleOut 0.9s ease-out forwards;
+            z-index: 20;
+        }
+
+        @keyframes rippleOut {
+            0% {
+                transform: scale(0);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0;
+            }
+        }
+
+        .status {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(140,170,255,0.3);
+            font-family: system-ui,sans-serif;
+            pointer-events: none;
+            user-select: none;
+            transition: opacity .3s;
+        }
+
+        /* ── shared overlay ── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5,8,22,0.78);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .overlay.show {
+                display: flex;
+            }
+
+        .modal-box {
+            background: linear-gradient(160deg,#111628 0%,#0e1535 100%);
+            border: 1px solid rgba(100,140,255,0.2);
+            border-radius: 18px;
+            padding: 36px 40px 32px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 0 0 1px rgba(100,160,255,0.07), 0 28px 72px rgba(0,0,30,0.75);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            animation: modalIn .22s cubic-bezier(.34,1.56,.64,1);
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-icon {
+            font-size: 36px;
+            line-height: 1;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            color: rgba(200,218,255,0.95);
+            font-family: system-ui,sans-serif;
+            text-align: center;
+        }
+
+        .modal-sub {
+            font-size: 12px;
+            color: rgba(140,165,255,0.45);
+            font-family: system-ui,sans-serif;
+            text-align: center;
+            letter-spacing: .3px;
+        }
+
+        /* ── setup modal ── */
+        .setup-field {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setup-lbl {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: rgba(140,165,255,0.45);
+            font-family: system-ui,sans-serif;
+        }
+
+        .setup-inp {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(100,140,255,0.2);
+            border-radius: 9px;
+            padding: 11px 14px;
+            font-family: 'Courier New',monospace;
+            font-size: 13px;
+            color: rgba(210,225,255,0.9);
+            outline: none;
+            transition: border-color .15s, background .15s;
+        }
+
+            .setup-inp:focus {
+                border-color: rgba(100,160,255,0.55);
+                background: rgba(255,255,255,0.08);
+            }
+
+            .setup-inp::placeholder {
+                color: rgba(100,130,200,0.35);
+            }
+
+        .setup-hint {
+            font-size: 10px;
+            color: rgba(120,150,220,0.4);
+            font-family: system-ui,sans-serif;
+            line-height: 1.5;
+        }
+
+        .setup-status {
+            min-height: 15px;
+            font-size: 11px;
+            font-family: 'Courier New',monospace;
+            text-align: center;
+            letter-spacing: .3px;
+        }
+
+        .setup-btn {
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg,#3d7eff 0%,#1e4bbf 100%);
+            color: #fff;
+            font-family: system-ui,sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(50,100,255,0.4);
+            transition: filter .15s, transform .15s, opacity .15s;
+        }
+
+            .setup-btn:hover:not(:disabled) {
+                filter: brightness(1.12);
+                transform: translateY(-1px);
+            }
+
+            .setup-btn:disabled {
+                opacity: .45;
+                cursor: not-allowed;
+            }
+
+        /* ── warning modal ── */
+        .warn-body {
+            font-size: 13px;
+            color: rgba(160,185,255,0.6);
+            font-family: system-ui,sans-serif;
+            text-align: center;
+            line-height: 1.75;
+        }
+
+            .warn-body strong {
+                color: rgba(210,225,255,0.88);
+                font-weight: 700;
+            }
+
+        .warn-username {
+            font-family: 'Courier New',monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: rgba(120,180,255,0.95);
+            background: rgba(60,120,255,0.1);
+            border: 1px solid rgba(80,140,255,0.2);
+            border-radius: 8px;
+            padding: 8px 24px;
+            letter-spacing: 1px;
+        }
+
+        .warn-btns {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .warn-back {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: rgba(180,200,255,0.7);
+            font-family: system-ui,sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s, color .15s;
+        }
+
+            .warn-back:hover {
+                background: rgba(255,255,255,0.09);
+                color: rgba(210,225,255,0.9);
+            }
+
+            .warn-back:disabled {
+                opacity: .45;
+                cursor: not-allowed;
+            }
+
+        .warn-confirm {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg,#3d7eff 0%,#1e4bbf 100%);
+            color: #fff;
+            font-family: system-ui,sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(50,100,255,0.4);
+            transition: filter .15s, transform .15s, opacity .15s;
+        }
+
+            .warn-confirm:hover:not(:disabled) {
+                filter: brightness(1.12);
+                transform: translateY(-1px);
+            }
+
+            .warn-confirm:disabled {
+                opacity: .45;
+                cursor: not-allowed;
+            }
+    </style>
+</head>
+<body>
+
+    <canvas id="stars"></canvas>
+
+    <svg id="grain" xmlns="http://www.w3.org/2000/svg">
+        <filter id="f" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch" result="noise" />
+            <feColorMatrix type="saturate" values="0" in="noise" result="gray" />
+            <feBlend in="SourceGraphic" in2="gray" mode="multiply" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#f)" fill="white" />
+    </svg>
+
+    <div class="center">
+        <div class="title-block">
+            <div class="title-logo">Welcome to</div>
+            <div class="title-main">MIST OS</div>
+            <div class="title-sub" id="title-sub">v1.3.1</div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" id="btn-mist" onclick="onMistClick(event)">
+                &nbsp; Launch Mist OS
+            </button>
+            <button class="btn btn-secondary" id="btn-legacy" onclick="launchLegacy(event)">
+                Launch Legacy OS
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 1: pick a username (first-time only) -->
+    <div class="overlay" id="setup-overlay">
+        <div class="modal-box">
+            <div class="modal-icon">🖥️</div>
+            <div class="modal-title">Create Your Username</div>
+            <div class="modal-sub">Used across MIST OS — choose carefully</div>
+            <div class="setup-field">
+                <div class="setup-lbl">Username</div>
+                <input class="setup-inp" id="setup-inp"
+                       placeholder="e.g. cooluser42" maxlength="24"
+                       autocomplete="off" spellcheck="false"
+                       oninput="setupClearStatus()"
+                       onkeydown="if(event.key==='Enter')setupSubmit()">
+                <div class="setup-hint">Letters, numbers, _ and - only &nbsp;·&nbsp; 3–24 characters</div>
+            </div>
+            <div class="setup-status" id="setup-status"></div>
+            <button class="setup-btn" id="setup-btn" onclick="setupSubmit()">Continue →</button>
+        </div>
+    </div>
+
+    <!-- Step 2: permanent-username warning -->
+    <div class="overlay" id="warn-overlay">
+        <div class="modal-box">
+            <div class="modal-icon">⚠️</div>
+            <div class="modal-title">This username is permanent</div>
+            <div class="warn-username" id="warn-username"></div>
+            <div class="warn-body">
+                Once claimed, <strong>this cannot be changed.</strong><br>
+                Make sure you're happy with it before launching.
+            </div>
+            <div class="warn-btns">
+                <button class="warn-back" id="warn-back" onclick="warnBack()">← Go Back</button>
+                <button class="warn-confirm" id="warn-confirm" onclick="warnConfirm()">Confirm &amp; Launch →</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="status" id="status">Ready</div>
+
+    <script>
+        var WORKER = 'https://chat.m48680582.workers.dev';
+        var LS_KEY = 'mistos_username';
+        var _pendingName = null;
+
+        /* ── stars ─────────────────────────────────────────────── */
+        (function () {
+            var c = document.getElementById('stars'), ctx = c.getContext('2d');
+            c.width = window.innerWidth; c.height = window.innerHeight;
+            function rng(n) { var v = (Math.sin(n * 127.1) * 43758.5453) % 1; return v < 0 ? v + 1 : v; }
+            var W = c.width, H = c.height;
+            for (var i = 0; i < 300; i++) {
+                var x = rng(i * 3) * W, y = rng(i * 3 + 1) * H, sz = rng(i * 3 + 2);
+                var rad = sz < 0.7 ? 0.5 : sz < 0.88 ? 0.8 : 1.2, br = 0.25 + sz * 0.6;
+                var dx = (x / W - 0.5) * 2, dy = (y / H - 0.5) * 2;
+                var vig = Math.max(0, 1 - (dx * dx + dy * dy) * 0.85);
+                ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(200,218,255,' + (br * vig).toFixed(2) + ')'; ctx.fill();
+            }
+        })();
+
+        /* ── utils ─────────────────────────────────────────────── */
+        function ripple(e) {
+            var r = document.createElement('div'), size = Math.max(innerWidth, innerHeight) * 2.2;
+            r.className = 'ripple';
+            r.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + (e.clientY - size / 2) + 'px;left:' + (e.clientX - size / 2) + 'px';
+            document.body.appendChild(r);
+            r.addEventListener('animationend', function () { r.remove(); });
+        }
+        function setStatus(msg) { var s = document.getElementById('status'); s.textContent = msg; s.style.opacity = '1'; }
+        function setBtns(off) { document.getElementById('btn-mist').disabled = off; document.getElementById('btn-legacy').disabled = off; }
+
+        /* ── launch button ─────────────────────────────────────── */
+        function onMistClick(e) {
+            ripple(e);
+            var stored = localStorage.getItem(LS_KEY);
+            if (stored) {
+                // returning user — straight to launch
+                doLaunch(stored);
+            } else {
+                // first time — username setup flow
+                document.getElementById('setup-overlay').classList.add('show');
+                setTimeout(function () { document.getElementById('setup-inp').focus(); }, 80);
+            }
+        }
+
+        /* ── step 1: username input ────────────────────────────── */
+        function setupClearStatus() {
+            var s = document.getElementById('setup-status'); s.textContent = ''; s.style.color = '';
+        }
+        function setupStatus(msg, color) {
+            var s = document.getElementById('setup-status'); s.textContent = msg; s.style.color = color || 'rgba(160,185,255,0.6)';
+        }
+        function setupSubmit() {
+            var raw = document.getElementById('setup-inp').value.trim();
+            var name = raw.replace(/[^a-zA-Z0-9_\-]/g, '').toLowerCase().slice(0, 24);
+            if (name.length < 3) { setupStatus('Must be at least 3 characters.', 'rgba(240,80,80,0.85)'); return; }
+
+            var btn = document.getElementById('setup-btn');
+            btn.disabled = true;
+            setupStatus('Checking availability…', 'rgba(140,170,255,0.6)');
+
+            fetch(WORKER + '/check?username=' + encodeURIComponent(name))
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    btn.disabled = false;
+                    if (data.taken) {
+                        setupStatus('"' + name + '" is already taken — try another.', 'rgba(240,80,80,0.85)');
+                    } else {
+                        // available → show warning
+                        _pendingName = name;
+                        document.getElementById('setup-overlay').classList.remove('show');
+                        document.getElementById('warn-username').textContent = name;
+                        document.getElementById('warn-overlay').classList.add('show');
+                    }
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    setupStatus('Could not reach server — check your connection.', 'rgba(240,80,80,0.85)');
+                });
+        }
+
+        /* ── step 2: warning ───────────────────────────────────── */
+        function warnBack() {
+            document.getElementById('warn-overlay').classList.remove('show');
+            document.getElementById('setup-overlay').classList.add('show');
+            setTimeout(function () { document.getElementById('setup-inp').focus(); }, 80);
+        }
+        function warnConfirm() {
+            var name = _pendingName; if (!name) return;
+            var btnC = document.getElementById('warn-confirm');
+            var btnB = document.getElementById('warn-back');
+            btnC.disabled = true; btnB.disabled = true;
+            btnC.textContent = 'Registering…';
+
+            fetch(WORKER + '/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: name })
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.ok) {
+                        localStorage.setItem(LS_KEY, data.username);
+                        document.getElementById('warn-overlay').classList.remove('show');
+                        doLaunch(data.username);
+                    } else {
+                        // race condition — someone grabbed it
+                        document.getElementById('warn-overlay').classList.remove('show');
+                        document.getElementById('setup-overlay').classList.add('show');
+                        setupStatus(data.error || 'Username unavailable — try another.', 'rgba(240,80,80,0.85)');
+                        btnC.disabled = false; btnB.disabled = false; btnC.textContent = 'Confirm & Launch →';
+                    }
+                })
+                .catch(function () {
+                    document.getElementById('warn-overlay').classList.remove('show');
+                    document.getElementById('setup-overlay').classList.add('show');
+                    setupStatus('Registration failed — check your connection.', 'rgba(240,80,80,0.85)');
+                    btnC.disabled = false; btnB.disabled = false; btnC.textContent = 'Confirm & Launch →';
+                });
+        }
+
+        /* ── do the actual launch + inject username ────────────── */
+        function doLaunch(username) {
+            setBtns(true); setStatus('Loading…');
+            var sub = document.getElementById('title-sub');
+            if (sub) sub.textContent = 'Welcome back, ' + username;
+
+            fetch('os.html')
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    var popup = window.open('about:blank', 'mistOS',
+                        'width=' + screen.availWidth + ',height=' + screen.availHeight +
+                        ',top=0,left=0,menubar=no,toolbar=no,location=no,status=no,scrollbars=no,resizable=yes');
+                    if (!popup) {
+                        alert('Popup blocked — please allow popups for this page and try again.');
+                        setBtns(false); setStatus('Ready'); return;
+                    }
+                    popup.document.open('text/html', 'replace');
+                    popup.document.write(html);
+                    popup.document.close();
+                    setStatus('Launched');
+
+                    // send username once popup is ready; also retry after delay as fallback
+                    var msg = { type: 'MIST_USERNAME', username: username };
+                    popup.addEventListener('load', function () { try { popup.postMessage(msg, '*'); } catch (e) { } });
+                    setTimeout(function () { try { popup.postMessage(msg, '*'); } catch (e) { } }, 500);
+                    setTimeout(function () { try { popup.postMessage(msg, '*'); } catch (e) { } }, 1200);
+
+                    window.addEventListener('message', function (ev) {
+                        if (ev.data && ev.data.type === 'CHROMEOS_DONE') { setBtns(false); setStatus('Ready'); }
+                    });
+                    var poll = setInterval(function () {
+                        if (popup.closed) { clearInterval(poll); setBtns(false); setStatus('Ready'); }
+                    }, 800);
+                })
+                .catch(function (err) {
+                    alert('Could not load os.html:\n' + err.message + '\n\nMake sure the file is in the same folder.');
+                    setBtns(false); setStatus('Ready');
+                });
+        }
+
+        /* ── legacy (unchanged) ────────────────────────────────── */
+        function launchLegacy(e) {
+            ripple(e); setBtns(true); setStatus('Loading…');
+            fetch('legacy.html')
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    var popup = window.open('about:blank', 'legacyOS',
+                        'width=' + screen.availWidth + ',height=' + screen.availHeight +
+                        ',top=0,left=0,menubar=no,toolbar=no,location=no,status=no,scrollbars=no,resizable=yes');
+                    if (!popup) { alert('Popup blocked.'); setBtns(false); setStatus('Ready'); return; }
+                    popup.document.open('text/html', 'replace');
+                    popup.document.write(html);
+                    popup.document.close();
+                    setStatus('Launched');
+                    var poll = setInterval(function () {
+                        if (popup.closed) { clearInterval(poll); setBtns(false); setStatus('Ready'); }
+                    }, 800);
+                })
+                .catch(function (err) {
+                    alert('Could not load legacy.html:\n' + err.message);
+                    setBtns(false); setStatus('Ready');
+                });
+        }
+    </script>
+</body>
+</html>

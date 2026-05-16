@@ -1,0 +1,2743 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CroshDeveloperSystem</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+        :root {
+            --bg: #1a1b26;
+            --panel: #16171f;
+            --accent: #7aa2f7;
+            --accent2: #bb9af7;
+            --green: #9ece6a;
+            --red: #f7768e;
+            --yellow: #e0af68;
+            --cyan: #7dcfff;
+            --text: #c0caf5;
+            --text-dim: #565f89;
+            --text-muted: #3b4261;
+            --border: #2a2b3d;
+            --win-bg: #13141c;
+            --win-header: #1f2033;
+            --hover: #252637;
+            --shadow: rgba(0,0,0,0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans',sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            cursor: default;
+        }
+
+        /* ── WALLPAPER ── */
+        #wallpaper {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            transition: background 0.4s;
+        }
+
+            #wallpaper::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background-image: radial-gradient(circle,rgba(255,255,255,0.012) 1px,transparent 1px);
+                background-size: 40px 40px;
+            }
+
+        #desktop {
+            position: fixed;
+            top: 0;
+            bottom: 52px;
+            left: 0;
+            right: 0;
+            z-index: 1;
+        }
+
+        /* ── BOOT OVERLAY ── */
+        #fs-overlay {
+            position: fixed;
+            inset: 0;
+            background: #0b0c11;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        #fs-title {
+            font-family: 'IBM Plex Mono',monospace;
+            color: var(--text);
+            font-size: 24px;
+            font-weight: 600;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        #fs-prompt {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-weight: 400;
+            margin-top: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                o4pacity: 1;
+            }
+        }
+
+        /* ── SHELF ── */
+        #shelf {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: rgba(13,14,19,0.97);
+            border-top: 1px solid var(--border);
+            backdrop-filter: blur(24px);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 1000;
+            gap: 2px;
+        }
+
+        .shelf-apps {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .dock-item {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            font-size: 20px;
+        }
+
+            .dock-item:hover {
+                background: var(--hover);
+                transform: translateY(-3px);
+            }
+
+            .dock-item.running::after {
+                content: '';
+                position: absolute;
+                bottom: 2px;
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: var(--accent);
+            }
+
+            .dock-item[data-tip]:hover::before {
+                content: attr(data-tip);
+                position: absolute;
+                bottom: calc(100% + 8px);
+                left: 50%;
+                transform: translateX(-50%);
+                background: #1f2033;
+                border: 1px solid var(--border);
+                color: var(--text);
+                font-size: 10px;
+                font-family: 'IBM Plex Mono',monospace;
+                padding: 3px 10px;
+                border-radius: 5px;
+                white-space: nowrap;
+                pointer-events: none;
+                z-index: 9999;
+            }
+
+        #shelf-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 12px;
+            border-left: 1px solid var(--border);
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .shelf-chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+            .shelf-chip:hover {
+                background: var(--hover);
+                color: var(--text);
+            }
+
+        #shelf-clock {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        #shelf-date {
+            color: var(--text-dim);
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .shelf-time-block {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding: 3px 6px;
+        }
+
+        /* ── WINDOWS ── */
+        .window {
+            position: absolute;
+            background: var(--win-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 20px 70px var(--shadow);
+            min-width: 320px;
+            min-height: 200px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: box-shadow 0.15s;
+        }
+
+            .window.focused {
+                border-color: rgba(122,162,247,0.28);
+                box-shadow: 0 24px 80px rgba(0,0,0,0.85),0 0 0 1px rgba(122,162,247,0.08);
+            }
+
+        .win-header {
+            height: 36px;
+            background: var(--win-header);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            cursor: move;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .win-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: filter 0.1s;
+            flex-shrink: 0;
+        }
+
+            .win-btn:hover {
+                filter: brightness(1.4);
+            }
+
+            .win-btn.close {
+                background: var(--red);
+            }
+
+            .win-btn.min {
+                background: var(--yellow);
+            }
+
+            .win-btn.max {
+                background: var(--green);
+            }
+
+        .win-title {
+            margin-left: 4px;
+            font-size: 12px;
+            font-family: 'IBM Plex Mono',monospace;
+            color: var(--text-dim);
+            flex: 1;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .win-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── TERMINAL ── */
+        #terminal-win {
+            top: 60px;
+            left: 80px;
+            width: 700px;
+            height: 430px;
+        }
+
+        #term-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12.5px;
+            line-height: 1.75;
+            background: #080910;
+        }
+
+            #term-output::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            #term-output::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 2px;
+            }
+
+        .term-line {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 2px;
+        }
+
+        .tpu {
+            color: var(--green);
+        }
+
+        .tpat, .tpc, .tpdo {
+            color: var(--text-dim);
+        }
+
+        .tph {
+            color: var(--accent);
+        }
+
+        .tppa {
+            color: var(--cyan);
+        }
+
+        .tout {
+            color: #8892b0;
+        }
+
+        .terr {
+            color: var(--red);
+        }
+
+        .tok {
+            color: var(--green);
+        }
+
+        .tinf {
+            color: var(--cyan);
+        }
+
+        .twrn {
+            color: var(--yellow);
+        }
+
+        .thl {
+            color: var(--accent);
+        }
+
+        .thl2 {
+            color: var(--accent2);
+        }
+
+        .tb {
+            font-weight: 600;
+        }
+
+        #term-input-row {
+            display: flex;
+            align-items: center;
+            padding: 7px 16px;
+            background: #080910;
+            border-top: 1px solid var(--border);
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12.5px;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #term-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12.5px;
+            caret-color: var(--accent);
+        }
+
+        /* ── SETTINGS ── */
+        #settings-win {
+            top: 60px;
+            left: 160px;
+            width: 680px;
+            height: 520px;
+        }
+
+        .settings-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .settings-sidebar {
+            width: 180px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            padding: 10px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .snav-group-label {
+            font-size: 9px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-family: 'IBM Plex Mono',monospace;
+            padding: 10px 12px 4px;
+        }
+
+        .snav {
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'IBM Plex Mono',monospace;
+        }
+
+            .snav:hover {
+                background: var(--hover);
+                color: var(--text);
+            }
+
+            .snav.active {
+                background: rgba(122,162,247,0.12);
+                color: var(--accent);
+            }
+
+        .snav-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 6px 4px;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+            .settings-content::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .settings-content::-webkit-scrollbar-thumb {
+                background: var(--border);
+            }
+
+        .stab {
+            display: none;
+        }
+
+            .stab.active {
+                display: block;
+            }
+
+        .sh {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .sh-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono',monospace;
+            margin-bottom: 16px;
+        }
+
+        .s-section {
+            margin-bottom: 20px;
+        }
+
+        .s-section-title {
+            font-size: 9px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-family: 'IBM Plex Mono',monospace;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sfield {
+            background: var(--win-header);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sfield-row {
+            background: var(--win-header);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 14px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+            .sfield label, .sfield-row label {
+                font-size: 9px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 1.2px;
+                font-family: 'IBM Plex Mono',monospace;
+            }
+
+            .sfield-row .sf-desc {
+                font-size: 11px;
+                color: var(--text-dim);
+                font-family: 'IBM Plex Mono',monospace;
+            }
+
+        .sfield input, .sfield select, .sfield textarea {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .sfield textarea {
+            resize: none;
+            height: 48px;
+            line-height: 1.5;
+        }
+
+        .sfield select option {
+            background: var(--win-bg);
+        }
+
+        .sfield-row select {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text);
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 11px;
+            padding: 3px 8px;
+            outline: none;
+        }
+
+            .sfield-row select option {
+                background: var(--win-bg);
+            }
+
+        .toggle {
+            width: 34px;
+            height: 18px;
+            background: var(--border);
+            border-radius: 9px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+            .toggle.on {
+                background: var(--accent);
+            }
+
+            .toggle::after {
+                content: '';
+                position: absolute;
+                width: 12px;
+                height: 12px;
+                background: #fff;
+                border-radius: 50%;
+                top: 3px;
+                left: 3px;
+                transition: left 0.2s;
+            }
+
+            .toggle.on::after {
+                left: 19px;
+            }
+
+        .irow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px;
+            background: var(--win-header);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+            .irow .k {
+                color: var(--text-dim);
+                font-family: 'IBM Plex Mono',monospace;
+                font-size: 11px;
+            }
+
+            .irow .v {
+                color: var(--accent);
+                font-family: 'IBM Plex Mono',monospace;
+                font-size: 11px;
+            }
+
+        .save-btn {
+            background: var(--accent);
+            color: #0d0e13;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 20px;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: filter 0.15s;
+        }
+
+            .save-btn:hover {
+                filter: brightness(1.15);
+            }
+
+        .wp-grid {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .wp-swatch {
+            height: 52px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+            .wp-swatch:hover {
+                transform: scale(1.04);
+            }
+
+            .wp-swatch.selected {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 2px rgba(122,162,247,0.3);
+            }
+
+            .wp-swatch::after {
+                content: attr(data-label);
+                position: absolute;
+                bottom: 4px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 8px;
+                font-family: 'IBM Plex Mono',monospace;
+                color: rgba(255,255,255,0.7);
+            }
+
+        .accent-grid {
+            display: grid;
+            grid-template-columns: repeat(5,1fr);
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .accent-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+            .accent-dot:hover {
+                transform: scale(1.15);
+            }
+
+            .accent-dot.selected {
+                border-color: #fff;
+                box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+            }
+
+        .font-preview {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 4px;
+            font-family: 'IBM Plex Mono',monospace;
+        }
+
+        /* ── FILES ── */
+        #files-win {
+            top: 80px;
+            left: 140px;
+            width: 520px;
+            height: 390px;
+        }
+
+        .fm-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .fm-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fm-nav-btn {
+            width: 26px;
+            height: 26px;
+            background: var(--win-header);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+            .fm-nav-btn:hover {
+                color: var(--text);
+                background: var(--hover);
+            }
+
+        .fm-path-bar {
+            flex: 1;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 11px;
+            color: var(--cyan);
+        }
+
+        .fm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(80px,1fr));
+            gap: 4px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+            .fm-grid::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .fm-grid::-webkit-scrollbar-thumb {
+                background: var(--border);
+            }
+
+        .fm-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.1s;
+            font-size: 10px;
+            text-align: center;
+            color: var(--text-dim);
+            font-family: 'IBM Plex Mono',monospace;
+        }
+
+            .fm-item:hover {
+                background: var(--hover);
+                color: var(--text);
+            }
+
+            .fm-item .fm-icon {
+                font-size: 24px;
+            }
+
+        /* ── MONITOR ── */
+        #monitor-win {
+            top: 110px;
+            left: 300px;
+            width: 440px;
+            height: 360px;
+        }
+
+        .mon-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+            .mon-body::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .mon-body::-webkit-scrollbar-thumb {
+                background: var(--border);
+            }
+
+        .mon-label {
+            font-size: 10px;
+            font-family: 'IBM Plex Mono',monospace;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .mon-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .mon-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1.2s ease;
+        }
+
+            .mon-fill.cpu {
+                background: linear-gradient(90deg,var(--accent),var(--accent2));
+            }
+
+            .mon-fill.mem {
+                background: linear-gradient(90deg,var(--green),var(--cyan));
+            }
+
+            .mon-fill.disk {
+                background: linear-gradient(90deg,var(--yellow),var(--red));
+            }
+
+            .mon-fill.gpu {
+                background: linear-gradient(90deg,var(--accent2),var(--red));
+            }
+
+        .mon-process-list {
+            background: var(--panel);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .mon-proc-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 6px 12px;
+            font-size: 9px;
+            font-family: 'IBM Plex Mono',monospace;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mon-proc-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-family: 'IBM Plex Mono',monospace;
+            color: var(--text-dim);
+            border-bottom: 1px solid rgba(42,43,61,0.5);
+        }
+
+            .mon-proc-row:last-child {
+                border-bottom: none;
+            }
+
+        /* ── BROWSER ── */
+        #browser-win {
+            top: 100px;
+            left: 250px;
+            width: 800px;
+            height: 500px;
+        }
+
+        .browser-body {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        .browser-frame {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ── GAMES ── */
+        #games-win {
+            top: 80px;
+            left: 180px;
+            width: 740px;
+            height: 540px;
+        }
+
+        .games-body {
+            display: flex;
+            flex-direction: column;
+            background: var(--win-bg);
+            overflow: hidden;
+        }
+
+        .games-topbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .games-back-btn {
+            background: var(--win-header);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: none;
+        }
+
+            .games-back-btn:hover {
+                background: var(--hover);
+                color: var(--text);
+            }
+
+        .games-topbar-label {
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .games-status {
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .games-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(160px,1fr));
+            gap: 12px;
+        }
+
+            .games-list::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .games-list::-webkit-scrollbar-thumb {
+                background: var(--border);
+            }
+
+        .game-card {
+            background: var(--win-header);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+            .game-card:hover {
+                border-color: var(--accent);
+                background: var(--hover);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+            }
+
+        .game-card-icon {
+            font-size: 32px;
+        }
+
+        .game-card-name {
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 11px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .game-card-desc {
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 9px;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        .games-iframe-wrap {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+            .games-iframe-wrap.active {
+                display: flex;
+            }
+
+            .games-iframe-wrap iframe {
+                flex: 1;
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: #000;
+            }
+
+        .games-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .games-error {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 10px;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* ── JS CONSOLE ── */
+        #jsconsole-win {
+            top: 90px;
+            left: 200px;
+            width: 640px;
+            height: 500px;
+        }
+
+        .jsc-body {
+            display: flex;
+            flex-direction: column;
+            background: var(--win-bg);
+            overflow: hidden;
+        }
+
+        .jsc-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            background: #080910;
+        }
+
+            .jsc-output::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .jsc-output::-webkit-scrollbar-thumb {
+                background: var(--border);
+            }
+
+        .jsc-input-area {
+            border-top: 1px solid var(--border);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+            background: #080910;
+        }
+
+        .jsc-textarea {
+            background: #0d0e16;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--cyan);
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 12px;
+            padding: 8px 12px;
+            resize: none;
+            outline: none;
+            min-height: 72px;
+            width: 100%;
+            line-height: 1.6;
+        }
+
+            .jsc-textarea:focus {
+                border-color: var(--accent);
+            }
+
+        .jsc-btns {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .jsc-run-btn {
+            background: var(--accent);
+            color: #0d0e13;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 18px;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: filter 0.15s;
+        }
+
+            .jsc-run-btn:hover {
+                filter: brightness(1.15);
+            }
+
+        .jsc-clear-btn {
+            background: var(--win-header);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 6px 14px;
+            font-family: 'IBM Plex Mono',monospace;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+            .jsc-clear-btn:hover {
+                color: var(--text);
+                background: var(--hover);
+            }
+
+        .jsc-warn {
+            font-size: 10px;
+            color: var(--yellow);
+            font-family: 'IBM Plex Mono',monospace;
+            padding: 6px 10px;
+            background: rgba(224,175,104,0.07);
+            border-radius: 4px;
+            border-left: 2px solid var(--yellow);
+        }
+
+        .jsc-line-result {
+            color: var(--green);
+        }
+
+        .jsc-line-err {
+            color: var(--red);
+        }
+
+        .jsc-line-log {
+            color: #8892b0;
+        }
+
+        .jsc-line-cmd {
+            color: var(--accent2);
+        }
+
+        /* ── DESKTOP ICONS ── */
+        .desktop-icon {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 76px;
+            text-align: center;
+            transition: background 0.1s;
+        }
+
+            .desktop-icon:hover {
+                background: rgba(122,162,247,0.08);
+            }
+
+            .desktop-icon .di-icon {
+                font-size: 30px;
+            }
+
+            .desktop-icon .di-label {
+                font-size: 10px;
+                font-family: 'IBM Plex Mono',monospace;
+                color: var(--text);
+                text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+                line-height: 1.3;
+            }
+
+        /* ── CTX MENU ── */
+        #ctx-menu {
+            position: fixed;
+            background: #1c1d28;
+            border: 1px solid #333450;
+            border-radius: 9px;
+            padding: 5px;
+            z-index: 3000;
+            display: none;
+            min-width: 175px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+        }
+
+        .ctx-item {
+            padding: 7px 14px;
+            font-size: 12px;
+            font-family: 'IBM Plex Mono',monospace;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .ctx-item:hover {
+                background: var(--hover);
+                color: var(--text);
+            }
+
+        .ctx-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* ── NOTIFICATIONS ── */
+        #notif-container {
+            position: fixed;
+            bottom: 62px;
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .notif {
+            background: #1c1d28;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 10px 14px;
+            min-width: 240px;
+            max-width: 300px;
+            font-size: 12px;
+            pointer-events: all;
+            animation: slideIn 0.2s ease;
+            border-left: 3px solid var(--accent);
+        }
+
+            .notif.success {
+                border-left-color: var(--green);
+            }
+
+            .notif.warn {
+                border-left-color: var(--yellow);
+            }
+
+            .notif.error {
+                border-left-color: var(--red);
+            }
+
+        .notif-title {
+            font-weight: 600;
+            color: var(--text);
+            font-family: 'IBM Plex Mono',monospace;
+            margin-bottom: 2px;
+            font-size: 11px;
+        }
+
+        .notif-body {
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(110%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="fs-overlay">
+        <div id="fs-title">CroshDeveloperSystem<div id="fs-prompt">Click anywhere to enter CroshDeveloperOS</div></div>
+    </div>
+
+    <div id="wallpaper"></div>
+
+    <div id="desktop" oncontextmenu="showCtxMenu(event)">
+        <!-- Desktop Icons -->
+        <div class="desktop-icon" style="left:18px;top:16px" ondblclick="openApp('terminal')"><div class="di-icon">🖥️</div><div class="di-label">Terminal</div></div>
+        <div class="desktop-icon" style="left:18px;top:112px" ondblclick="openApp('settings')"><div class="di-icon">⚙️</div><div class="di-label">Settings</div></div>
+        <div class="desktop-icon" style="left:18px;top:208px" ondblclick="openApp('files')"><div class="di-icon">📁</div><div class="di-label">Files</div></div>
+        <div class="desktop-icon" style="left:18px;top:304px" ondblclick="openApp('monitor')"><div class="di-icon">📊</div><div class="di-label">System Monitor</div></div>
+        <div class="desktop-icon" style="left:18px;top:400px" ondblclick="openApp('browser')"><div class="di-icon">🌐</div><div class="di-label">Endis Browser</div></div>
+
+        <!-- TERMINAL -->
+        <div class="window" id="terminal-win" style="display:none">
+            <div class="win-header" onmousedown="startDrag(event,'terminal-win')">
+                <div class="win-btn close" onclick="closeWin('terminal-win')"></div>
+                <div class="win-btn min" onclick="minWin('terminal-win')"></div>
+                <div class="win-btn max" onclick="maxWin('terminal-win')"></div>
+                <div class="win-title">bash — <span id="title-user">user1</span>@crosh-dev</div>
+            </div>
+            <div class="win-body">
+                <div id="term-output"></div>
+                <div id="term-input-row">
+                    <span><span class="tpu" id="prompt-user">user1</span><span class="tpat">@</span><span class="tph">crosh-dev</span><span class="tpc">:</span><span class="tppa">~</span><span class="tpdo">$</span></span>
+                    <input type="text" id="term-input" autocomplete="off" spellcheck="false" />
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS — expanded, organised -->
+        <div class="window" id="settings-win" style="display:none">
+            <div class="win-header" onmousedown="startDrag(event,'settings-win')">
+                <div class="win-btn close" onclick="closeWin('settings-win')"></div>
+                <div class="win-btn min" onclick="minWin('settings-win')"></div>
+                <div class="win-btn max" onclick="maxWin('settings-win')"></div>
+                <div class="win-title">System Settings</div>
+            </div>
+            <div class="win-body settings-layout">
+                <div class="settings-sidebar">
+                    <div class="snav-group-label">Account</div>
+                    <div class="snav active" id="snav-profile" onclick="showTab('profile',this)">👤 Profile</div>
+                    <div class="snav" id="snav-session" onclick="showTab('session',this)">🔑 Session</div>
+                    <div class="snav-sep"></div>
+                    <div class="snav-group-label">Appearance</div>
+                    <div class="snav" id="snav-wallpaper" onclick="showTab('wallpaper',this)">🖼️ Wallpaper</div>
+                    <div class="snav" id="snav-theme" onclick="showTab('theme',this)">🎨 Theme</div>
+                    <div class="snav" id="snav-display" onclick="showTab('display',this)">🖥️ Display</div>
+                    <div class="snav-sep"></div>
+                    <div class="snav-group-label">System</div>
+                    <div class="snav" id="snav-system" onclick="showTab('system',this)">💻 Hardware</div>
+                    <div class="snav" id="snav-network" onclick="showTab('network',this)">🌐 Network</div>
+                    <div class="snav" id="snav-security" onclick="showTab('security',this)">🔒 Security</div>
+                    <div class="snav" id="snav-developer" onclick="showTab('developer',this)">⌨️ Developer</div>
+                    <div class="snav-sep"></div>
+                    <div class="snav" id="snav-about" onclick="showTab('about',this)">ℹ️ About</div>
+                </div>
+                <div class="settings-content">
+
+                    <!-- PROFILE -->
+                    <div class="stab active" id="tab-profile">
+                        <div class="sh">User Profile</div>
+                        <div class="sh-sub">Your account identity and preferences</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Identity</div>
+                            <div class="sfield"><label>Username</label><input type="text" id="s-username" value="user1" /></div>
+                            <div class="sfield"><label>Full Name</label><input type="text" id="s-fullname" value="Default User" /></div>
+                            <div class="sfield"><label>Email Address</label><input type="text" id="s-email" value="user1@crosh.dev" /></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Permissions</div>
+                            <div class="sfield"><label>Account Type</label><select id="s-role"><option>Developer</option><option>Administrator</option><option>Standard User</option></select></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Bio</div>
+                            <div class="sfield"><label>Short Bio (optional)</label><textarea id="s-bio" placeholder="Tell us about yourself…"></textarea></div>
+                        </div>
+                        <button class="save-btn" onclick="saveProfile()">💾 Save Profile</button>
+                    </div>
+
+                    <!-- SESSION -->
+                    <div class="stab" id="tab-session">
+                        <div class="sh">Session</div>
+                        <div class="sh-sub">Runtime and terminal preferences</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Terminal</div>
+                            <div class="sfield">
+                                <label>Terminal Font Size</label>
+                                <select id="s-fontsize"><option value="11">11px</option><option value="12" selected>12px</option><option value="13">13px</option><option value="14">14px</option><option value="15">15px</option></select>
+                            </div>
+                            <div class="sfield">
+                                <label>Prompt Style</label>
+                                <select id="s-prompt-style"><option value="default">user@host:~$</option><option value="minimal">~$</option><option value="full">user@host:/home/user$</option></select>
+                            </div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Startup</div>
+                            <div class="sfield-row">
+                                <div><label>Auto-open Terminal</label><div class="sf-desc">Open terminal on login</div></div>
+                                <div class="toggle on" id="toggle-autoterm" onclick="toggleSwitch(this,'s-autoterm')"></div>
+                                <input type="hidden" id="s-autoterm" value="1" />
+                            </div>
+                            <div class="sfield-row">
+                                <div><label>Show Boot Messages</label><div class="sf-desc">Display kernel boot sequence</div></div>
+                                <div class="toggle on" id="toggle-bootmsg" onclick="toggleSwitch(this,'s-bootmsg')"></div>
+                                <input type="hidden" id="s-bootmsg" value="1" />
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveSession()">💾 Save Session Settings</button>
+                    </div>
+
+                    <!-- WALLPAPER -->
+                    <div class="stab" id="tab-wallpaper">
+                        <div class="sh">Wallpaper</div>
+                        <div class="sh-sub">Choose your desktop background</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Presets</div>
+                            <div class="wp-grid" id="wp-grid"></div>
+                        </div>
+                        <div class="s-section" style="margin-top:16px;">
+                            <div class="s-section-title">Custom Gradient</div>
+                            <div class="sfield"><label>CSS Background Value</label><input type="text" id="s-wp-custom" placeholder="e.g. linear-gradient(135deg,#1a1b26,#2d3561)" /></div>
+                            <button class="save-btn" onclick="applyCustomWallpaper()" style="margin-top:6px;">Apply Custom</button>
+                        </div>
+                    </div>
+
+                    <!-- THEME -->
+                    <div class="stab" id="tab-theme">
+                        <div class="sh">Theme</div>
+                        <div class="sh-sub">Accent colour and visual style</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Accent Colour</div>
+                            <div class="accent-grid" id="accent-grid"></div>
+                        </div>
+                        <div class="s-section" style="margin-top:16px;">
+                            <div class="s-section-title">Window Style</div>
+                            <div class="sfield-row">
+                                <div><label>Translucent Shelf</label><div class="sf-desc">Blur effect on taskbar</div></div>
+                                <div class="toggle on" id="toggle-blur" onclick="toggleSwitch(this,'s-blur')"></div>
+                                <input type="hidden" id="s-blur" value="1" />
+                            </div>
+                            <div class="sfield-row">
+                                <div><label>Window Shadows</label><div class="sf-desc">Drop shadows on windows</div></div>
+                                <div class="toggle on" id="toggle-shadows" onclick="toggleSwitch(this,'s-shadows')"></div>
+                                <input type="hidden" id="s-shadows" value="1" />
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveTheme()">💾 Save Theme</button>
+                    </div>
+
+                    <!-- DISPLAY -->
+                    <div class="stab" id="tab-display">
+                        <div class="sh">Display</div>
+                        <div class="sh-sub">Screen and layout settings</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Screen</div>
+                            <div class="irow"><span class="k">Resolution</span><span class="v" id="disp-res">–</span></div>
+                            <div class="irow"><span class="k">DPI</span><span class="v" id="disp-dpi">–</span></div>
+                            <div class="irow"><span class="k">Color Depth</span><span class="v">24-bit</span></div>
+                            <div class="irow"><span class="k">Refresh Rate</span><span class="v" id="disp-refresh">60 Hz</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Scale</div>
+                            <div class="sfield">
+                                <label>UI Scale</label>
+                                <select id="s-scale"><option value="90">90%</option><option value="100" selected>100%</option><option value="110">110%</option><option value="125">125%</option></select>
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveDisplay()">💾 Save Display Settings</button>
+                    </div>
+
+                    <!-- HARDWARE -->
+                    <div class="stab" id="tab-system">
+                        <div class="sh">Hardware</div>
+                        <div class="sh-sub">System component information</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Processor</div>
+                            <div class="irow"><span class="k">Model</span><span class="v">Intel Core i7-1370P</span></div>
+                            <div class="irow"><span class="k">Cores / Threads</span><span class="v">14 / 20</span></div>
+                            <div class="irow"><span class="k">Base Clock</span><span class="v">1.9 GHz</span></div>
+                            <div class="irow"><span class="k">Boost Clock</span><span class="v">5.2 GHz</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Memory</div>
+                            <div class="irow"><span class="k">Installed RAM</span><span class="v">16 GB LPDDR5</span></div>
+                            <div class="irow"><span class="k">Speed</span><span class="v">5200 MT/s</span></div>
+                            <div class="irow"><span class="k">Channels</span><span class="v">Dual</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Storage &amp; GPU</div>
+                            <div class="irow"><span class="k">Primary Drive</span><span class="v">256 GB NVMe SSD</span></div>
+                            <div class="irow"><span class="k">GPU</span><span class="v">Intel Iris Xe Graphics</span></div>
+                            <div class="irow"><span class="k">VRAM</span><span class="v">Shared (up to 4 GB)</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Runtime</div>
+                            <div class="irow"><span class="k">Uptime</span><span class="v" id="uptime-val">0h 0m 0s</span></div>
+                            <div class="irow"><span class="k">Kernel</span><span class="v">6.6.30-crosh-dev</span></div>
+                            <div class="irow"><span class="k">OS</span><span class="v">CroshDeveloperSystem 6.1</span></div>
+                        </div>
+                    </div>
+
+                    <!-- NETWORK -->
+                    <div class="stab" id="tab-network">
+                        <div class="sh">Network</div>
+                        <div class="sh-sub">Connection and interface details</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Interface — eth0</div>
+                            <div class="irow"><span class="k">IPv4 Address</span><span class="v">192.168.1.42</span></div>
+                            <div class="irow"><span class="k">Subnet Mask</span><span class="v">255.255.255.0</span></div>
+                            <div class="irow"><span class="k">Gateway</span><span class="v">192.168.1.1</span></div>
+                            <div class="irow"><span class="k">MAC Address</span><span class="v">e4:5f:01:3a:bc:72</span></div>
+                            <div class="irow"><span class="k">Status</span><span class="v" style="color:var(--green)">Connected — 1 Gbps</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">DNS</div>
+                            <div class="irow"><span class="k">Primary</span><span class="v">1.1.1.1 (Cloudflare)</span></div>
+                            <div class="irow"><span class="k">Secondary</span><span class="v">8.8.8.8 (Google)</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Traffic</div>
+                            <div class="irow"><span class="k">Received</span><span class="v">612.4 MB</span></div>
+                            <div class="irow"><span class="k">Transmitted</span><span class="v">172.3 MB</span></div>
+                        </div>
+                    </div>
+
+                    <!-- SECURITY -->
+                    <div class="stab" id="tab-security">
+                        <div class="sh">Security</div>
+                        <div class="sh-sub">System protection and access controls</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Firewall &amp; Kernel</div>
+                            <div class="irow"><span class="k">Firewall</span><span class="v" style="color:var(--green)">Active (ufw)</span></div>
+                            <div class="irow"><span class="k">AppArmor</span><span class="v" style="color:var(--green)">Enforcing</span></div>
+                            <div class="irow"><span class="k">SELinux</span><span class="v" style="color:var(--yellow)">Permissive</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Encryption</div>
+                            <div class="irow"><span class="k">Disk Encryption</span><span class="v" style="color:var(--green)">LUKS2</span></div>
+                            <div class="irow"><span class="k">TPM</span><span class="v" style="color:var(--green)">2.0 Active</span></div>
+                            <div class="irow"><span class="k">Secure Boot</span><span class="v" style="color:var(--green)">Enabled</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Access Log</div>
+                            <div class="irow"><span class="k">Failed Logins (24h)</span><span class="v" style="color:var(--green)">0</span></div>
+                            <div class="irow"><span class="k">Last Login</span><span class="v" id="last-login-val">—</span></div>
+                            <div class="irow"><span class="k">Active Sessions</span><span class="v">1</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Toggles</div>
+                            <div class="sfield-row">
+                                <div><label>SSH Daemon</label><div class="sf-desc">Allow remote SSH connections</div></div>
+                                <div class="toggle" id="toggle-ssh" onclick="toggleSwitch(this,'s-ssh')"></div>
+                                <input type="hidden" id="s-ssh" value="0" />
+                            </div>
+                            <div class="sfield-row">
+                                <div><label>Auto-lock Screen</label><div class="sf-desc">Lock after 5 minutes idle</div></div>
+                                <div class="toggle on" id="toggle-autolock" onclick="toggleSwitch(this,'s-autolock')"></div>
+                                <input type="hidden" id="s-autolock" value="1" />
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveSecurity()">💾 Save Security Settings</button>
+                    </div>
+
+                    <!-- DEVELOPER -->
+                    <div class="stab" id="tab-developer">
+                        <div class="sh">Developer Tools</div>
+                        <div class="sh-sub">Advanced options for developers</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Environment</div>
+                            <div class="sfield"><label>Custom CROSH_DEV Flags</label><input type="text" id="s-devflags" placeholder="--verbose --trace-fs" /></div>
+                            <div class="sfield">
+                                <label>Default Shell</label>
+                                <select id="s-shell"><option value="/bin/bash">bash</option><option value="/bin/zsh">zsh</option><option value="/bin/sh">sh</option></select>
+                            </div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Debug Options</div>
+                            <div class="sfield-row">
+                                <div><label>Verbose Kernel Logging</label><div class="sf-desc">Show extra kernel output</div></div>
+                                <div class="toggle" id="toggle-verbose" onclick="toggleSwitch(this,'s-verbose')"></div>
+                                <input type="hidden" id="s-verbose" value="0" />
+                            </div>
+                            <div class="sfield-row">
+                                <div><label>Developer Mode Banner</label><div class="sf-desc">Show dev mode indicator</div></div>
+                                <div class="toggle on" id="toggle-devbanner" onclick="toggleSwitch(this,'s-devbanner')"></div>
+                                <input type="hidden" id="s-devbanner" value="1" />
+                            </div>
+                            <div class="sfield-row">
+                                <div><label>Experimental Features</label><div class="sf-desc">Enable unstable features</div></div>
+                                <div class="toggle" id="toggle-experimental" onclick="toggleSwitch(this,'s-experimental')"></div>
+                                <input type="hidden" id="s-experimental" value="0" />
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveDeveloper()">💾 Save Developer Settings</button>
+                    </div>
+
+                    <!-- ABOUT -->
+                    <div class="stab" id="tab-about">
+                        <div class="sh">About CroshDeveloperSystem</div>
+                        <div class="sh-sub">Build and licence information</div>
+                        <div class="s-section">
+                            <div class="s-section-title">Version</div>
+                            <div class="irow"><span class="k">Version</span><span class="v">6.1.0-stable</span></div>
+                            <div class="irow"><span class="k">Build</span><span class="v">#20240812.094501</span></div>
+                            <div class="irow"><span class="k">Channel</span><span class="v">dev-channel</span></div>
+                            <div class="irow"><span class="k">Firmware</span><span class="v">CDS.10032.102.0</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Licence</div>
+                            <div class="irow"><span class="k">Licence</span><span class="v">MIT / Open Source</span></div>
+                            <div class="irow"><span class="k">Copyright</span><span class="v">© 2024 Crosh Dev Team</span></div>
+                        </div>
+                        <div class="s-section">
+                            <div class="s-section-title">Data</div>
+                            <button class="save-btn" style="background:var(--red);margin-right:8px;" onclick="resetAllSettings()">⚠ Reset All Settings</button>
+                        </div>
+                    </div>
+
+                </div><!-- /settings-content -->
+            </div>
+        </div>
+
+        <!-- FILES -->
+        <div class="window" id="files-win" style="display:none">
+            <div class="win-header" onmousedown="startDrag(event,'files-win')">
+                <div class="win-btn close" onclick="closeWin('files-win')"></div>
+                <div class="win-btn min" onclick="minWin('files-win')"></div>
+                <div class="win-btn max" onclick="maxWin('files-win')"></div>
+                <div class="win-title">Files</div>
+            </div>
+            <div class="win-body fm-body">
+                <div class="fm-toolbar">
+                    <div class="fm-nav-btn">◀</div><div class="fm-nav-btn">▶</div><div class="fm-nav-btn">↑</div>
+                    <div class="fm-path-bar" id="fm-path">/home/user1</div>
+                </div>
+                <div class="fm-grid">
+                    <div class="fm-item"><div class="fm-icon">📁</div>Documents</div>
+                    <div class="fm-item"><div class="fm-icon">📁</div>Downloads</div>
+                    <div class="fm-item"><div class="fm-icon">📁</div>Pictures</div>
+                    <div class="fm-item"><div class="fm-icon">📁</div>Projects</div>
+                    <div class="fm-item"><div class="fm-icon">📁</div>.config</div>
+                    <div class="fm-item"><div class="fm-icon">📁</div>.local</div>
+                    <div class="fm-item"><div class="fm-icon">📄</div>.bashrc</div>
+                    <div class="fm-item"><div class="fm-icon">📄</div>.profile</div>
+                    <div class="fm-item"><div class="fm-icon">📄</div>README.md</div>
+                    <div class="fm-item"><div class="fm-icon">🔗</div>bin</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MONITOR -->
+        <div class="window" id="monitor-win" style="display:none">
+            <div class="win-header" onmousedown="startDrag(event,'monitor-win')">
+                <div class="win-btn close" onclick="closeWin('monitor-win')"></div>
+                <div class="win-btn min" onclick="minWin('monitor-win')"></div>
+                <div class="win-btn max" onclick="maxWin('monitor-win')"></div>
+                <div class="win-title">System Monitor</div>
+            </div>
+            <div class="win-body mon-body">
+                <div><div class="mon-label"><span>CPU</span><span id="cpu-val">–</span></div><div class="mon-bar"><div class="mon-fill cpu" id="cpu-bar" style="width:0%"></div></div></div>
+                <div><div class="mon-label"><span>Memory</span><span id="mem-val">–</span></div><div class="mon-bar"><div class="mon-fill mem" id="mem-bar" style="width:0%"></div></div></div>
+                <div><div class="mon-label"><span>Disk I/O</span><span id="disk-val">–</span></div><div class="mon-bar"><div class="mon-fill disk" id="disk-bar" style="width:0%"></div></div></div>
+                <div><div class="mon-label"><span>GPU</span><span id="gpu-val">–</span></div><div class="mon-bar"><div class="mon-fill gpu" id="gpu-bar" style="width:0%"></div></div></div>
+                <div class="mon-process-list">
+                    <div class="mon-proc-header"><span>Process</span><span>PID</span><span>CPU%</span><span>MEM%</span></div>
+                    <div class="mon-proc-row"><span>Xorg</span><span>1042</span><span id="p1">2.1</span><span>3.4</span></div>
+                    <div class="mon-proc-row"><span>chrome</span><span>2811</span><span id="p2">8.4</span><span>12.1</span></div>
+                    <div class="mon-proc-row"><span>code-oss</span><span>3390</span><span id="p3">4.2</span><span>6.8</span></div>
+                    <div class="mon-proc-row"><span>bash</span><span>4001</span><span id="p4">0.1</span><span>0.3</span></div>
+                    <div class="mon-proc-row"><span>systemd</span><span>1</span><span id="p5">0.0</span><span>0.2</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BROWSER -->
+        <div class="window" id="browser-win" style="display:none">
+            <div class="win-header" onmousedown="startDrag(event,'browser-win')">
+                <div class="win-btn close" onclick="closeWin('browser-win')"></div>
+                <div class="win-btn min" onclick="minWin('browser-win')"></div>
+                <div class="win-btn max" onclick="maxWin('browser-win')"></div>
+                <div class="win-title">Endis Browser for ChromeOSDeveloper</div>
+            </div>
+            <div class="win-body browser-body">
+                <iframe src="https://google.com/" class="browser-frame" allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <!-- GAMES — opened by runapptester command only -->
+        <div class="window" id="games-win" style="display:none">
+            <div class="win-header" onmousedown="startDrag(event,'games-win')">
+                <div class="win-btn close" onclick="closeWin('games-win')"></div>
+                <div class="win-btn min" onclick="minWin('games-win')"></div>
+                <div class="win-btn max" onclick="maxWin('games-win')"></div>
+                <div class="win-title" id="games-win-title">App Tester — Games</div>
+            </div>
+            <div class="win-body games-body">
+                <div class="games-topbar">
+                    <button class="games-back-btn" id="games-back-btn" onclick="gamesShowList()">← Back</button>
+                    <span class="games-topbar-label" id="games-topbar-label">Loading games list…</span>
+                    <span class="games-status" id="games-status"></span>
+                </div>
+                <div class="games-list" id="games-list" style="display:none"></div>
+                <div class="games-iframe-wrap" id="games-iframe-wrap">
+                    <div class="games-loading" id="games-loading">Loading…</div>
+                    <iframe id="games-iframe" src="" allowfullscreen style="display:none"
+                            onload="document.getElementById('games-loading').style.display='none';this.style.display='flex';"></iframe>
+                    <div class="games-error" id="games-error">
+                        <div style="font-size:28px;">⚠️</div>
+                        <div>This game couldn't be embedded due to browser restrictions.</div>
+                        <button class="save-btn" id="games-open-tab-btn" onclick="gamesOpenTab()">Open in New Tab Instead</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JS CONSOLE — opened by sudo runjsexe command only -->
+        <div class="window" id="jsconsole-win" style="display:none">
+            <div class="win-header" onmousedown="startDrag(event,'jsconsole-win')">
+                <div class="win-btn close" onclick="closeWin('jsconsole-win')"></div>
+                <div class="win-btn min" onclick="minWin('jsconsole-win')"></div>
+                <div class="win-btn max" onclick="maxWin('jsconsole-win')"></div>
+                <div class="win-title">JavaScript Executor [PRIVILEGED]</div>
+            </div>
+            <div class="win-body jsc-body">
+                <div class="jsc-output" id="jsc-output">
+                    <div style="color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-bottom:3px;">CroshDeveloperSystem — JavaScript Executor v1.0</div>
+                    <div style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:11px;">Opened via: <span style="color:var(--yellow)">sudo runjsexe</span> — privileged execution context.</div>
+                    <div style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-bottom:6px;">Type JavaScript and press Run or Ctrl+Enter. Full page context available.</div>
+                </div>
+                <div class="jsc-input-area">
+                    <textarea class="jsc-textarea" id="jsc-input" placeholder="// Enter JavaScript here…" spellcheck="false"></textarea>
+                    <div class="jsc-btns">
+                        <button class="jsc-run-btn" onclick="jscRun()">▶ Run</button>
+                        <button class="jsc-clear-btn" onclick="jscClear()">Clear</button>
+                        <span style="flex:1"></span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted)">Ctrl+Enter to run</span>
+                    </div>
+                    <div class="jsc-warn">⚠ Do not enter JavaScript code from unknown sources. This runs with full page privileges.</div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /desktop -->
+
+    <div id="shelf">
+        <div class="shelf-apps">
+            <div class="dock-item" data-tip="Terminal" onclick="openApp('terminal')" id="di-terminal">🖥️</div>
+            <div class="dock-item" data-tip="Files" onclick="openApp('files')" id="di-files">📁</div>
+            <div class="dock-item" data-tip="Settings" onclick="openApp('settings')" id="di-settings">⚙️</div>
+            <div class="dock-item" data-tip="Sys Monitor" onclick="openApp('monitor')" id="di-monitor">📊</div>
+            <div class="dock-item" data-tip="Endis Browser" onclick="openApp('browser')" id="di-browser">🌐</div>
+        </div>
+        <div id="shelf-right">
+            <span class="shelf-chip" onclick="notify('Network','eth0 · 192.168.1.42 · Connected','success')">📶 eth0</span>
+            <span class="shelf-chip">🔊 84%</span>
+            <span class="shelf-chip">🔋 91%</span>
+            <div class="shelf-time-block">
+                <span id="shelf-clock">–</span>
+                <span id="shelf-date">–</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="notif-container"></div>
+    <div id="ctx-menu">
+        <div class="ctx-item" onclick="openApp('terminal');hideCtx()">🖥️ Terminal</div>
+        <div class="ctx-item" onclick="openApp('files');hideCtx()">📁 Files</div>
+        <div class="ctx-item" onclick="openApp('browser');hideCtx()">🌐 Endis Browser</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" onclick="openApp('settings');hideCtx()">⚙️ Settings</div>
+        <div class="ctx-item" onclick="openApp('monitor');hideCtx()">📊 System Monitor</div>
+    </div>
+
+    <script>
+'use strict';
+// ═══════════════════════════════════════════════
+//  PERSISTENT SETTINGS — everything via localStorage
+// ═══════════════════════════════════════════════
+var STORE_KEY = 'cds_settings_v2';
+
+var DEFAULTS = {
+  // profile
+  username:'user1', fullname:'Default User', email:'user1@crosh.dev',
+  role:'Developer', bio:'',
+  // session
+  fontsize:'12', promptStyle:'default', autoterm:true, bootmsg:true,
+  // wallpaper
+  wallpaper:'default', wpCustom:'',
+  // theme
+  accent:'#7aa2f7', blur:true, shadows:true,
+  // display
+  scale:'100',
+  // security
+  ssh:false, autolock:true,
+  // developer
+  devflags:'', shell:'/bin/bash', verbose:false, devbanner:true, experimental:false,
+};
+
+function loadSettings(){
+  try{
+    var s=localStorage.getItem(STORE_KEY);
+    if(s){var parsed=JSON.parse(s);return Object.assign({},DEFAULTS,parsed);}
+  }catch(e){}
+  return Object.assign({},DEFAULTS);
+}
+function saveSettings(partial){
+  S=Object.assign(S,partial);
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(S));}catch(e){notify('Settings','Failed to save: '+e.message,'error');}
+}
+
+var S = loadSettings();
+var SYS = {hostname:'crosh-dev',os:'CroshDeveloperSystem 6.1',kernel:'6.6.30-crosh-dev',cpu:'Intel Core i7-1370P × 14',ram:'16 GB LPDDR5',gpu:'Intel Iris Xe Graphics',ip:'192.168.1.42',shell:'/bin/bash'};
+var sessionSec = 0;
+
+// ── WALLPAPER / ACCENT / FONT — must be defined BEFORE applyAllSettings runs ──
+var WALLPAPERS=[
+  {id:'default',label:'Tokyo Night',bg:'radial-gradient(ellipse 80% 60% at 20% 80%,rgba(122,162,247,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 20%,rgba(187,154,247,0.06) 0%,transparent 60%),linear-gradient(160deg,#0b0c11 0%,#13141e 45%,#0f1018 100%)'},
+  {id:'aurora', label:'Aurora',     bg:'radial-gradient(ellipse 100% 80% at 50% 100%,rgba(99,235,191,0.15) 0%,transparent 55%),radial-gradient(ellipse 80% 60% at 20% 0%,rgba(122,162,247,0.12) 0%,transparent 55%),linear-gradient(180deg,#080c10 0%,#0d1e1a 100%)'},
+  {id:'sunset', label:'Sunset',     bg:'radial-gradient(ellipse 80% 50% at 50% 100%,rgba(247,118,142,0.2) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 0%,rgba(224,175,104,0.15) 0%,transparent 55%),linear-gradient(160deg,#0f0b0b 0%,#1e1218 100%)'},
+  {id:'ocean',  label:'Ocean',      bg:'radial-gradient(ellipse 80% 60% at 30% 70%,rgba(125,207,255,0.1) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 70% 30%,rgba(122,162,247,0.08) 0%,transparent 55%),linear-gradient(160deg,#080d12 0%,#0b1520 100%)'},
+  {id:'forest', label:'Forest',     bg:'radial-gradient(ellipse 80% 60% at 40% 80%,rgba(158,206,106,0.1) 0%,transparent 55%),radial-gradient(ellipse 60% 50% at 70% 20%,rgba(125,207,255,0.06) 0%,transparent 55%),linear-gradient(160deg,#080d08 0%,#0d1a0e 100%)'},
+  {id:'void',   label:'Void',       bg:'linear-gradient(135deg,#050507 0%,#08090f 100%)'},
+];
+var ACCENTS=[
+  {id:'blue',  color:'#7aa2f7'},{id:'purple',color:'#bb9af7'},{id:'green', color:'#9ece6a'},
+  {id:'cyan',  color:'#7dcfff'},{id:'red',   color:'#f7768e'},{id:'orange',color:'#ff9e64'},
+  {id:'yellow',color:'#e0af68'},{id:'pink',  color:'#f7a8d8'},{id:'teal',  color:'#4db6ac'},
+  {id:'white', color:'#c0caf5'},
+];
+function applyWallpaper(id,custom){
+  var bg='';
+  if(custom){bg=custom;}
+  else{var w=WALLPAPERS.find(function(x){return x.id===id;});if(w)bg=w.bg;}
+  if(bg)document.getElementById('wallpaper').style.background=bg;
+}
+function applyAccent(color){
+  document.documentElement.style.setProperty('--accent',color);
+}
+function applyFontSize(sz){
+  var el=document.getElementById('term-output');
+  if(el)el.style.fontSize=sz+'px';
+}
+
+// ── apply saved settings on load ──
+(function applyAllSettings(){
+  // Profile
+  document.getElementById('s-username').value = S.username;
+  document.getElementById('s-fullname').value = S.fullname;
+  document.getElementById('s-email').value    = S.email;
+  document.getElementById('s-bio').value      = S.bio||'';
+  var roleEl=document.getElementById('s-role');
+  for(var i=0;i<roleEl.options.length;i++)if(roleEl.options[i].value===S.role||roleEl.options[i].text===S.role)roleEl.selectedIndex=i;
+
+  // Session
+  setSelectVal('s-fontsize',S.fontsize);
+  setSelectVal('s-prompt-style',S.promptStyle);
+  syncToggle('toggle-autoterm','s-autoterm',S.autoterm);
+  syncToggle('toggle-bootmsg','s-bootmsg',S.bootmsg);
+
+  // Developer
+  document.getElementById('s-devflags').value = S.devflags||'';
+  setSelectVal('s-shell',S.shell);
+  syncToggle('toggle-verbose','s-verbose',S.verbose);
+  syncToggle('toggle-devbanner','s-devbanner',S.devbanner);
+  syncToggle('toggle-experimental','s-experimental',S.experimental);
+
+  // Theme
+  syncToggle('toggle-blur','s-blur',S.blur);
+  syncToggle('toggle-shadows','s-shadows',S.shadows);
+
+  // Security
+  syncToggle('toggle-ssh','s-ssh',S.ssh);
+  syncToggle('toggle-autolock','s-autolock',S.autolock);
+
+  // Display
+  setSelectVal('s-scale',S.scale);
+
+  // Apply cosmetics
+  applyWallpaper(S.wallpaper, S.wpCustom);
+  applyAccent(S.accent);
+  applyFontSize(S.fontsize);
+
+  // Sync user-facing elements
+  var pu=document.getElementById('prompt-user');if(pu)pu.textContent=S.username;
+  var tu=document.getElementById('title-user');if(tu)tu.textContent=S.username;
+  var fp=document.getElementById('fm-path');if(fp)fp.textContent='/home/'+S.username;
+
+  // Display info
+  setTimeout(function(){
+    document.getElementById('disp-res').textContent=window.screen.width+'×'+window.screen.height;
+    document.getElementById('disp-dpi').textContent=(window.devicePixelRatio*96).toFixed(0)+' dpi (×'+window.devicePixelRatio+')';
+  },100);
+})();
+
+function setSelectVal(id,val){
+  var el=document.getElementById(id);if(!el)return;
+  for(var i=0;i<el.options.length;i++)if(el.options[i].value===String(val))el.selectedIndex=i;
+}
+function syncToggle(toggleId,hiddenId,val){
+  var tog=document.getElementById(toggleId);
+  var hid=document.getElementById(hiddenId);
+  var on=!!val;
+  if(tog)tog.classList.toggle('on',on);
+  if(hid)hid.value=on?'1':'0';
+}
+
+// ── SAVE FUNCTIONS ──
+function saveProfile(){
+  var u=document.getElementById('s-username').value.trim()||S.username;
+  saveSettings({
+    username:u,
+    fullname:document.getElementById('s-fullname').value.trim()||S.fullname,
+    email:document.getElementById('s-email').value.trim()||S.email,
+    role:document.getElementById('s-role').value,
+    bio:document.getElementById('s-bio').value
+  });
+  document.getElementById('prompt-user').textContent=S.username;
+  document.getElementById('title-user').textContent=S.username;
+  document.getElementById('fm-path').textContent='/home/'+S.username;
+  notify('Settings','Profile saved ✓','success');
+}
+function saveSession(){
+  saveSettings({
+    fontsize:document.getElementById('s-fontsize').value,
+    promptStyle:document.getElementById('s-prompt-style').value,
+    autoterm:document.getElementById('s-autoterm').value==='1',
+    bootmsg:document.getElementById('s-bootmsg').value==='1'
+  });
+  applyFontSize(S.fontsize);
+  notify('Settings','Session settings saved ✓','success');
+}
+function saveTheme(){
+  saveSettings({
+    blur:document.getElementById('s-blur').value==='1',
+    shadows:document.getElementById('s-shadows').value==='1'
+  });
+  applyAccent(S.accent);
+  notify('Settings','Theme saved ✓','success');
+}
+function saveDisplay(){
+  saveSettings({scale:document.getElementById('s-scale').value});
+  document.documentElement.style.fontSize=(parseInt(S.scale)/100*16)+'px';
+  notify('Settings','Display settings saved ✓','success');
+}
+function saveSecurity(){
+  saveSettings({
+    ssh:document.getElementById('s-ssh').value==='1',
+    autolock:document.getElementById('s-autolock').value==='1'
+  });
+  notify('Settings','Security settings saved ✓','success');
+}
+function saveDeveloper(){
+  saveSettings({
+    devflags:document.getElementById('s-devflags').value,
+    shell:document.getElementById('s-shell').value,
+    verbose:document.getElementById('s-verbose').value==='1',
+    devbanner:document.getElementById('s-devbanner').value==='1',
+    experimental:document.getElementById('s-experimental').value==='1'
+  });
+  notify('Settings','Developer settings saved ✓','success');
+}
+function applyCustomWallpaper(){
+  var v=document.getElementById('s-wp-custom').value.trim();
+  if(!v){notify('Wallpaper','Please enter a CSS background value','warn');return;}
+  saveSettings({wallpaper:'custom',wpCustom:v});
+  applyWallpaper('',v);
+  notify('Wallpaper','Custom wallpaper applied ✓','success');
+}
+function resetAllSettings(){
+  if(!confirm('Reset ALL settings to defaults? This cannot be undone.'))return;
+  try{localStorage.removeItem(STORE_KEY);}catch(e){}
+  notify('Settings','Settings reset — refreshing…','warn');
+  setTimeout(function(){location.reload();},1200);
+}
+
+// ── TOGGLE SWITCH ──
+function toggleSwitch(togEl,hiddenId){
+  var hid=document.getElementById(hiddenId);
+  var isOn=togEl.classList.toggle('on');
+  if(hid)hid.value=isOn?'1':'0';
+}
+
+// Build wallpaper grid
+(function(){
+  var grid=document.getElementById('wp-grid');
+  WALLPAPERS.forEach(function(w){
+    var el=document.createElement('div');
+    el.className='wp-swatch'+(S.wallpaper===w.id?' selected':'');
+    el.style.background=w.bg;
+    el.dataset.label=w.label;
+    el.dataset.id=w.id;
+    el.onclick=function(){
+      document.querySelectorAll('.wp-swatch').forEach(function(s){s.classList.remove('selected');});
+      el.classList.add('selected');
+      saveSettings({wallpaper:w.id,wpCustom:''});
+      applyWallpaper(w.id,'');
+      notify('Wallpaper',w.label+' applied ✓','success');
+    };
+    grid.appendChild(el);
+  });
+})();
+
+// Build accent grid
+(function(){
+  var grid=document.getElementById('accent-grid');
+  ACCENTS.forEach(function(a){
+    var el=document.createElement('div');
+    el.className='accent-dot'+(S.accent===a.color?' selected':'');
+    el.style.background=a.color;
+    el.title=a.id;
+    el.onclick=function(){
+      document.querySelectorAll('.accent-dot').forEach(function(d){d.classList.remove('selected');});
+      el.classList.add('selected');
+      saveSettings({accent:a.color});
+      applyAccent(a.color);
+      notify('Theme','Accent set to '+a.id+' ✓','success');
+    };
+    grid.appendChild(el);
+  });
+})();
+
+// ═══════════════════════════════════════════════
+//  FULLSCREEN
+// ═══════════════════════════════════════════════
+(function(){
+  var _closing=false;
+  var overlay=document.getElementById('fs-overlay');
+  var hasStarted=false;
+  function doFS(){
+    var el=document.documentElement;
+    var fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+    if(fn)fn.call(el).catch(function(){});
+  }
+  overlay.addEventListener('click',function(){
+    doFS();
+    overlay.style.display='none';
+    if(!hasStarted){
+      hasStarted=true;
+      if(S.autoterm){
+        setTimeout(function(){
+          openApp('terminal');
+          notify('CroshDeveloperSystem','Session started as '+S.username,'success');
+        },300);
+      }
+    }
+  });
+  function onFSChange(){
+    var inFS=document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement;
+    if(!inFS&&!_closing)overlay.style.display='flex';
+  }
+  document.addEventListener('fullscreenchange',onFSChange);
+  document.addEventListener('webkitfullscreenchange',onFSChange);
+  document.addEventListener('mozfullscreenchange',onFSChange);
+  document.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='1')e.preventDefault();},true);
+  window.__CDS_setClosing=function(){_closing=true;};
+  window.__CDS_exitFS=function(){
+    var ex=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+    if(ex)ex.call(document).catch(function(){});
+  };
+})();
+
+// ═══════════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════════
+function tick(){
+  var n=new Date();
+  document.getElementById('shelf-clock').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('shelf-date').textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  sessionSec++;
+  var h=Math.floor(sessionSec/3600),m=Math.floor((sessionSec%3600)/60),s=sessionSec%60;
+  var uv=document.getElementById('uptime-val');if(uv)uv.textContent=h+'h '+m+'m '+s+'s';
+  var ll=document.getElementById('last-login-val');if(ll&&ll.textContent==='—')ll.textContent=n.toLocaleString();
+}
+setInterval(tick,1000);tick();
+
+// ═══════════════════════════════════════════════
+//  MONITOR
+// ═══════════════════════════════════════════════
+function updateMon(){
+  var cpu=8+Math.random()*30,mem=38+Math.random()*20,disk=2+Math.random()*50,gpu=5+Math.random()*38;
+  document.getElementById('cpu-bar').style.width=cpu+'%';document.getElementById('cpu-val').textContent=cpu.toFixed(1)+'%';
+  document.getElementById('mem-bar').style.width=mem+'%';document.getElementById('mem-val').textContent=mem.toFixed(0)+'% ('+((mem/100)*16).toFixed(1)+' GB / 16 GB)';
+  document.getElementById('disk-bar').style.width=disk+'%';document.getElementById('disk-val').textContent=(disk*1.8).toFixed(0)+' MB/s';
+  document.getElementById('gpu-bar').style.width=gpu+'%';document.getElementById('gpu-val').textContent=gpu.toFixed(0)+'%';
+  ['p1','p2','p3','p4','p5'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=(Math.random()*9).toFixed(1);});
+}
+setInterval(updateMon,2000);updateMon();
+
+// ═══════════════════════════════════════════════
+//  WINDOW MANAGEMENT
+// ═══════════════════════════════════════════════
+var WINS={terminal:'terminal-win',settings:'settings-win',files:'files-win',monitor:'monitor-win',browser:'browser-win',games:'games-win',jsconsole:'jsconsole-win'};
+var DEFPOS={'terminal-win':{x:100,y:60},'settings-win':{x:160,y:60},'files-win':{x:160,y:70},'monitor-win':{x:280,y:90},'browser-win':{x:220,y:70},'games-win':{x:180,y:60},'jsconsole-win':{x:200,y:70}};
+var DEFSZ={'terminal-win':'700px,430px','settings-win':'680px,520px','files-win':'520px,390px','monitor-win':'440px,360px','browser-win':'800px,500px','games-win':'740px,540px','jsconsole-win':'640px,500px'};
+var topZ=100;
+
+function openApp(name){
+  var id=WINS[name];if(!id)return;
+  var el=document.getElementById(id);if(!el)return;
+  if(el.style.display==='none'||!el.style.display){
+    el.style.display='flex';
+    el.style.left=DEFPOS[id].x+'px';el.style.top=DEFPOS[id].y+'px';
+    if(!el.dataset.maximized){var wh=(DEFSZ[id]||'500px,400px').split(',');el.style.width=wh[0];el.style.height=wh[1];}
+  }
+  focusWin(id);updateDock();hideCtx();
+}
+function focusWin(id){
+  document.querySelectorAll('.window').forEach(function(w){w.classList.remove('focused');});
+  var el=document.getElementById(id);el.style.zIndex=++topZ;el.classList.add('focused');
+}
+function closeWin(id){document.getElementById(id).style.display='none';updateDock();}
+function minWin(id){document.getElementById(id).style.display='none';updateDock();}
+function maxWin(id){
+  var el=document.getElementById(id);
+  if(el.dataset.maximized){el.style.left=el.dataset.px;el.style.top=el.dataset.py;el.style.width=el.dataset.pw;el.style.height=el.dataset.ph;delete el.dataset.maximized;}
+  else{el.dataset.px=el.style.left;el.dataset.py=el.style.top;el.dataset.pw=el.style.width;el.dataset.ph=el.style.height;el.style.left='0';el.style.top='0';el.style.width='100%';el.style.height='calc(100vh - 52px)';el.dataset.maximized='1';}
+}
+function updateDock(){
+  Object.keys(WINS).forEach(function(n){var id=WINS[n];var el=document.getElementById(id);var di=document.getElementById('di-'+n);if(di)di.classList.toggle('running',!!el&&el.style.display!=='none');});
+}
+document.querySelectorAll('.window').forEach(function(w){w.addEventListener('mousedown',function(){focusWin(w.id);});});
+
+var drag=null;
+function startDrag(e,id){
+  if(e.target.classList.contains('win-btn'))return;
+  focusWin(id);var r=document.getElementById(id).getBoundingClientRect();
+  drag={id:id,ox:e.clientX-r.left,oy:e.clientY-r.top};e.preventDefault();
+}
+document.addEventListener('mousemove',function(e){if(!drag)return;var el=document.getElementById(drag.id);el.style.left=(e.clientX-drag.ox)+'px';el.style.top=Math.max(0,e.clientY-drag.oy)+'px';});
+document.addEventListener('mouseup',function(){drag=null;});
+
+function showCtxMenu(e){e.preventDefault();var m=document.getElementById('ctx-menu');m.style.display='block';m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=Math.min(e.clientY,window.innerHeight-200)+'px';}
+function hideCtx(){document.getElementById('ctx-menu').style.display='none';}
+document.addEventListener('click',hideCtx);
+
+function notify(title,msg,type){
+  type=type||'info';
+  var c=document.getElementById('notif-container');
+  var n=document.createElement('div');
+  n.className='notif'+(type==='success'?' success':type==='warn'?' warn':type==='error'?' error':'');
+  n.innerHTML='<div class="notif-title">'+title+'</div><div class="notif-body">'+msg+'</div>';
+  c.appendChild(n);
+  setTimeout(function(){n.style.animation='fadeOut 0.3s ease forwards';setTimeout(function(){n.remove();},300);},3500);
+}
+
+function showTab(name,el){
+  document.querySelectorAll('.stab').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.snav').forEach(function(i){i.classList.remove('active');});
+  document.getElementById('tab-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+//  GAMES — data inlined, launched via runapptester command
+// ═══════════════════════════════════════════════
+// Games data is inlined here so it works whether os.html is opened directly
+// OR written into an about:blank popup by desktop.html (where fetch() relative
+// URLs cannot resolve to sibling files).
+var GAMES_DATA = [
+  {
+    "name": "Minecraft",
+    "icon": "🧱",
+    "desc": "Build and explore in 1.12.2",
+    "url": "https://freedombrowser.org/static/mc/1.12.2/wasm/"
+  },
+  {
+    "name": "Undertale",
+    "icon": "❤️",
+    "desc": "The RPG where you don't have to kill anyone",
+    "url": "https://sleepie.uk/undertale/"
+  },
+  {
+    "name": "Deltarune",
+    "icon": "🤍",
+    "desc": "The parallel story to Undertale",
+    "url": "https://mexi.rest/schoolwork/deltarune/"
+  },
+  {
+    "name": "FNAF 1",
+    "icon": "🐻",
+    "desc": "Survive Five Nights at Freddy's",
+    "url": "https://mexi.rest/schoolwork/FNAF1-main/FNAF1-main/"
+  },
+  {
+    "name": "FNAF 2",
+    "icon": "🐻",
+    "desc": "The grand reopening of Freddy Fazbear's",
+    "url": "https://mexi.rest/schoolwork/fnaf2/"
+  },
+  {
+    "name": "UCN",
+    "icon": "🐻",
+    "desc": "Ultimate Custom Night challenge",
+    "url": "https://mexi.rest/schoolwork/ucn-main/ucn-main/"
+  },
+  {
+    "name": "Ultrakil",
+    "icon": "🤖",
+    "desc": "Fast-paced retro FPS action",
+    "url": "https://gg.storytellergame.io/ultrakill/"
+  },
+  {
+    "name": "Rocket Goal",
+    "icon": "🏎️",
+    "desc": "High-speed soccer with cars",
+    "url": "https://rocketgoal.io"
+  },
+  {
+    "name": "SM64",
+    "icon": "🚽",
+    "desc": "Super Mario 64 in the browser",
+    "url": "https://mexi.rest/schoolwork/mario64/"
+  },
+  {
+    "name": "DDLC",
+    "icon": "👧",
+    "desc": "Doki Doki Literature Club Plus",
+    "url": "https://mexi.rest/schoolwork/ddlcplus/"
+  },
+  {
+    "name": "Geometry.com",
+    "icon": "🟦",
+    "desc": "Rhythm-based action platforming",
+    "url": "https://www.geometrydash.com/game/index.html"
+  },
+  {
+    "name": "Geometry Lite",
+    "icon": "🟨",
+    "desc": "Lite version of Geometry Dash",
+    "url": "https://geometrylitegame.org/geometry-dash-lite-game.embed"
+  }
+];
+var currentGameUrl = '';
+
+function gamesShowList(){
+  document.getElementById('games-list').style.display='grid';
+  document.getElementById('games-iframe-wrap').classList.remove('active');
+  document.getElementById('games-back-btn').style.display='none';
+  document.getElementById('games-topbar-label').textContent='Select a game to play';
+  document.getElementById('games-win-title').textContent='App Tester — Games';
+  var iframe=document.getElementById('games-iframe');
+  iframe.src='';iframe.style.display='none';
+  document.getElementById('games-loading').style.display='flex';
+  document.getElementById('games-error').style.display='none';
+  currentGameUrl='';
+}
+
+function gamesLaunch(idx){
+  var g=GAMES_DATA[idx];
+  currentGameUrl=g.url;
+  document.getElementById('games-list').style.display='none';
+  document.getElementById('games-iframe-wrap').classList.add('active');
+  document.getElementById('games-back-btn').style.display='inline-block';
+  document.getElementById('games-topbar-label').textContent=g.name;
+  document.getElementById('games-win-title').textContent='App Tester — '+g.name;
+  document.getElementById('games-status').textContent=g.url;
+
+  var loading=document.getElementById('games-loading');
+  var iframe=document.getElementById('games-iframe');
+  var errDiv=document.getElementById('games-error');
+
+  loading.style.display='flex';
+  loading.textContent='Loading '+g.name+'…';
+  iframe.style.display='none';
+  errDiv.style.display='none';
+
+  // timeout fallback — if iframe hasn't loaded in 6s, show error+open tab option
+  var loadTimeout=setTimeout(function(){
+    loading.style.display='none';
+    iframe.style.display='none';
+    errDiv.style.display='flex';
+  },6000);
+
+  iframe.onload=function(){
+    clearTimeout(loadTimeout);
+    loading.style.display='none';
+    errDiv.style.display='none';
+    iframe.style.display='block';
+    iframe.style.flex='1';
+  };
+  iframe.onerror=function(){
+    clearTimeout(loadTimeout);
+    loading.style.display='none';
+    iframe.style.display='none';
+    errDiv.style.display='flex';
+  };
+  iframe.src=g.url;
+}
+
+function gamesOpenTab(){
+  if(currentGameUrl)window.open(currentGameUrl,'_blank');
+}
+
+function gamesLoadFromJSON(){
+  // GAMES_DATA is inlined in the script — no fetch needed.
+  // This ensures the app works both when opened directly AND when launched
+  // from desktop.html via an about:blank popup (where relative fetch URLs fail).
+  var data = GAMES_DATA;
+  tp('<span class="tout">Loading App Tester…</span>');
+  var list=document.getElementById('games-list');
+  list.innerHTML='';
+  data.forEach(function(g,i){
+    var card=document.createElement('div');
+    card.className='game-card';
+    card.innerHTML='<div class="game-card-icon">'+g.icon+'</div><div class="game-card-name">'+esc(g.name)+'</div><div class="game-card-desc">'+esc(g.desc)+'</div>';
+    card.onclick=function(){gamesLaunch(i);};
+    list.appendChild(card);
+  });
+  document.getElementById('games-topbar-label').textContent='Select a game  ('+data.length+' available)';
+  list.style.display='grid';
+  document.getElementById('games-iframe-wrap').classList.remove('active');
+  tp('<span class="tok">✓ App Tester ready — '+data.length+' games available</span>');
+  openApp('games');
+}
+
+// ═══════════════════════════════════════════════
+//  JS CONSOLE
+// ═══════════════════════════════════════════════
+function jscLog(html){
+  var d=document.createElement('div');
+  d.style.cssText='font-family:IBM Plex Mono,monospace;font-size:12px;line-height:1.6';
+  d.innerHTML=html;
+  var out=document.getElementById('jsc-output');
+  out.appendChild(d);out.scrollTop=99999;
+}
+function jscRun(){
+  var code=document.getElementById('jsc-input').value.trim();
+  if(!code)return;
+  jscLog('<span class="jsc-line-cmd">&gt;&gt; '+esc(code)+'</span>');
+  try{
+    var oldLog=console.log,oldWarn=console.warn,oldErr=console.error;
+    console.log=function(){var a=Array.from(arguments).map(function(x){return typeof x==='object'?JSON.stringify(x,null,2):String(x);}).join(' ');jscLog('<span class="jsc-line-log">'+esc(a)+'</span>');oldLog.apply(console,arguments);};
+    console.warn=function(){var a=Array.from(arguments).map(String).join(' ');jscLog('<span style="color:var(--yellow);font-family:IBM Plex Mono,monospace;font-size:12px">⚠ '+esc(a)+'</span>');oldWarn.apply(console,arguments);};
+    console.error=function(){var a=Array.from(arguments).map(String).join(' ');jscLog('<span class="jsc-line-err">✖ '+esc(a)+'</span>');oldErr.apply(console,arguments);};
+    var result=eval(code);// eslint-disable-line no-eval
+    console.log=oldLog;console.warn=oldWarn;console.error=oldErr;
+    if(result!==undefined)jscLog('<span class="jsc-line-result">← '+esc(typeof result==='object'&&result!==null?JSON.stringify(result,null,2):String(result))+'</span>');
+  }catch(err){
+    jscLog('<span class="jsc-line-err">✖ '+esc(err.toString())+'</span>');
+  }
+}
+function jscClear(){
+  document.getElementById('jsc-output').innerHTML='<div style="color:var(--text-dim);font-family:IBM Plex Mono,monospace;font-size:11px;">Console cleared.</div>';
+}
+document.addEventListener('keydown',function(e){
+  var ta=document.getElementById('jsc-input');
+  if(document.activeElement===ta&&e.ctrlKey&&e.key==='Enter'){e.preventDefault();jscRun();}
+});
+
+// ═══════════════════════════════════════════════
+//  TERMINAL
+// ═══════════════════════════════════════════════
+var TO=document.getElementById('term-output');
+var TI=document.getElementById('term-input');
+var cmdHist=[],histIdx=-1;
+var logsRunning=false,logsTimer=null;
+
+function tp(html){var d=document.createElement('div');d.innerHTML=html;TO.appendChild(d);TO.scrollTop=TO.scrollHeight;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function tpPrompt(cmd){
+  TO.insertAdjacentHTML('beforeend','<div class="term-line"><span class="tpu">'+esc(S.username)+'</span><span class="tpat">@</span><span class="tph">'+SYS.hostname+'</span><span class="tpc">:</span><span class="tppa">~</span><span class="tpdo">$</span>&nbsp;<span style="color:var(--text)">'+esc(cmd)+'</span></div>');
+  TO.scrollTop=TO.scrollHeight;
+}
+
+// Boot
+(function(){
+  if(!S.bootmsg)return;
+  var lines=[
+    '<span class="thl tb">CroshDeveloperSystem 6.1</span> — kernel <span class="thl2">6.6.30-crosh-dev</span>',
+    '<span class="tout">Initializing developer environment…</span>',
+    '<span class="tok">✓</span> <span class="tout">Loaded 247 kernel modules</span>',
+    '<span class="tok">✓</span> <span class="tout">Mounted filesystems (ext4, tmpfs, vfat)</span>',
+    '<span class="tok">✓</span> <span class="tout">Network up — eth0 '+SYS.ip+'</span>',
+    '<span class="tok">✓</span> <span class="tout">Session started for <span class="thl">'+esc(S.username)+'</span></span>',
+    '<span class="tout">Type <span class="thl">help</span> for available commands.</span>',
+    ''
+  ];
+  lines.forEach(function(l,i){setTimeout(function(){tp(l);},i*85);});
+})();
+
+// LOGS
+var LOG_POOL=[
+  function(){return '<span class="tout">[kernel]   eth0: received '+rnd(1000,9999)+' bytes on IRQ-'+rnd(10,40)+'</span>';},
+  function(){return '<span class="twrn">[syslog]   WARN: swap usage at '+rnd(55,85)+'% — consider freeing memory</span>';},
+  function(){return '<span class="tout">[cron]     Executed /usr/lib/crosh/health_check.sh at '+ts()+'</span>';},
+  function(){return '<span class="tok">[dhcpcd]  Lease renewed for eth0 — next renewal in '+rnd(3600,7200)+'s</span>';},
+  function(){return '<span class="tout">[auditd]   syscall=read pid='+rnd(2000,8000)+' uid=1000 success=yes</span>';},
+  function(){return '<span class="twrn">[thermal]  CPU temp: '+rnd(62,79)+'°C — normal range</span>';},
+  function(){return '<span class="tout">[journald] Rotating log /var/log/crosh/dev.log.'+rnd(1,99)+'</span>';},
+  function(){return '<span class="tok">[udev]    Added /dev/input/event'+rnd(0,9)+' (keyboard)</span>';},
+  function(){return '<span class="terr">[oom]     Low memory — triggering reclaim on DMA32</span>';},
+  function(){return '<span class="tout">[ntpd]     Synced to pool.ntp.org — offset '+(Math.random()*0.02-0.01).toFixed(6)+'s</span>';},
+  function(){return '<span class="tout">[bash]     PID '+rnd(1000,9999)+' forked — exec /usr/bin/crosh-monitor</span>';},
+  function(){return '<span class="tok">[systemd]  crosh-agent.service entered active state</span>';},
+  function(){return '<span class="twrn">[net]      Packet loss: '+rnd(1,4)+'% on eth0 (transient)</span>';},
+  function(){return '<span class="tout">[dmesg]    usb '+rnd(0,3)+'-'+rnd(1,4)+': disconnect, device '+rnd(2,10)+'</span>';},
+  function(){return '<span class="tout">[crosh]    Heartbeat — session cds-'+Math.random().toString(36).substr(2,8)+'</span>';},
+  function(){return '<span class="tok">[firewall] ACCEPT TCP 192.168.1.'+rnd(1,254)+':'+rnd(1024,65535)+' → :22</span>';},
+  function(){return '<span class="terr">[kernel]   EXT4 journal commit I/O error '+(-rnd(5,30))+'</span>';},
+  function(){return '<span class="tout">[sshd]     Failed password from 198.51.100.'+rnd(1,254)+':'+rnd(1024,65535)+'</span>';},
+  function(){return '<span class="twrn">[disk]     nvme0n1: reallocated sector count: '+rnd(0,4)+'</span>';},
+  function(){return '<span class="tout">[apparmor] ALLOWED /usr/bin/python3 pid='+rnd(2000,9000)+'</span>';},
+  function(){return '<span class="tok">[update]   '+rnd(1,20)+' security updates available</span>';},
+  function(){return '<span class="tout">[crosh-vm] Hypervisor OK — guest uptime '+rnd(1,72)+'h</span>';},
+  function(){return '<span class="tout">[dbus]     NetworkManager.StateChanged → '+rnd(70,73)+'</span>';},
+  function(){return '<span class="twrn">[gpu]      Iris Xe reclock — '+rnd(400,1200)+'MHz</span>';},
+  function(){return '<span class="tout">[rsyslog]  Forwarded '+rnd(5,50)+' entries to 10.0.0.1:514</span>';}
+];
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function ts(){return new Date().toLocaleTimeString('en-US',{hour12:false});}
+function scheduleLog(){
+  if(!logsRunning)return;
+  logsTimer=setTimeout(function(){
+    var fn=LOG_POOL[Math.floor(Math.random()*LOG_POOL.length)];
+    tp('<span style="color:var(--text-muted)">['+ts()+']</span>  '+fn());
+    scheduleLog();
+  },(1+Math.random()*9)*1000);
+}
+
+// ═══════════════════════════════════════════════
+//  SUDO COMMANDS
+// ═══════════════════════════════════════════════
+var SUDO_CMDS={
+  changetabname:function(args){
+    var raw=args.join(' ').replace(/^["']|["']$/g,'');
+    if(!raw){tp('<span class="terr">usage: sudo changetabname "New Title"</span>');return;}
+    document.title=raw;
+    tp('<span class="tok">✓ Tab title changed to: '+esc(raw)+'</span>');
+  },
+  runjsexe:function(){
+    openApp('jsconsole');
+    tp('<span class="tok">✓ JavaScript Executor opened (privileged context).</span>');
+    notify('Security','JavaScript Executor launched with sudo','warn');
+  },
+};
+
+// ═══════════════════════════════════════════════
+//  COMMANDS
+// ═══════════════════════════════════════════════
+var CMDS={
+  help:function(){
+    var cmds=[
+      ['help',              'List standard commands'],
+      ['sudohelp',          'List privileged sudo commands'],
+      ['clear_log',         'Clear terminal output'],
+      ['fetch_userinfo',    'Display current account info'],
+      ['run_chromeos',      'Hand off to ChromeOS runtime'],
+      ['logs',              'Stream live system logs  (logs stop to halt)'],
+      ['runapptester',      'Launch the Games / App Tester'],
+      ['whoami',            'Print effective username'],
+      ['id',                'Print user and group identity'],
+      ['uname',             'Print kernel info  (-a for full)'],
+      ['uptime',            'Show session uptime and load'],
+      ['ls',                'List directory  (-la for long format)'],
+      ['pwd',               'Print working directory'],
+      ['ps',                'Show active processes'],
+      ['df',                'Report disk usage'],
+      ['free',              'Display memory usage'],
+      ['ifconfig',          'Show network interfaces'],
+      ['ping',              'Send ICMP echo request  [host]'],
+      ['echo',              'Print arguments'],
+      ['date',              'Print current date/time'],
+      ['hostname',          'Print system hostname'],
+      ['env',               'Print environment variables'],
+      ['history',           'Show command history'],
+      ['neofetch',          'System summary with ASCII art'],
+      ['top',               'Live process snapshot'],
+      ['cat',               'Print file contents'],
+      ['curl',              'HTTP data transfer'],
+      ['sudo',              'Execute command as root'],
+      ['lsblk',             'List block devices'],
+      ['dmesg',             'Print kernel ring buffer'],
+    ];
+    tp('<span class="thl tb">CroshDeveloperSystem — Commands</span>');
+    tp('<span class="tout">────────────────────────────────────────────────────────────</span>');
+    cmds.forEach(function(c){tp('  <span class="tok" style="display:inline-block;min-width:210px">'+c[0]+'</span><span class="tout">'+c[1]+'</span>');});
+    tp('<span class="tout">────────────────────────────────────────────────────────────</span>');
+    tp('<span class="tout">  Run <span class="thl">sudohelp</span> for privileged commands.</span>');
+  },
+  sudohelp:function(){
+    tp('<span class="thl tb">CroshDeveloperSystem — Sudo Commands</span>');
+    tp('<span class="tout">────────────────────────────────────────────────────────────</span>');
+    [
+      ['sudo changetabname "title"', 'Change the browser tab/window title'],
+      ['sudo runjsexe',              'Open the privileged JavaScript Executor'],
+    ].forEach(function(c){tp('  <span class="twrn" style="display:inline-block;min-width:240px">'+c[0]+'</span><span class="tout">'+c[1]+'</span>');});
+    tp('<span class="tout">────────────────────────────────────────────────────────────</span>');
+  },
+  runapptester:function(){
+    gamesLoadFromJSON();
+  },
+  clear_log:function(){TO.innerHTML='';},
+  fetch_userinfo:function(){
+    tp('<span class="thl tb">── Account Information ────────────────────────────────</span>');
+    [['Username',S.username],['Full Name',S.fullname],['Email',S.email],['Role',S.role],
+     ['Home','/home/'+S.username],['Shell',SYS.shell],['Hostname',SYS.hostname],
+     ['IP',SYS.ip],['OS',SYS.os],['Kernel',SYS.kernel]
+    ].forEach(function(r){tp('  <span class="tinf" style="display:inline-block;min-width:130px">'+r[0]+':</span><span class="tout">'+esc(r[1])+'</span>');});
+    tp('<span class="thl">───────────────────────────────────────────────────────</span>');
+  },
+  run_chromeos:function(){
+    tp('<span class="tout">Requesting ChromeOS session handoff…</span>');
+    setTimeout(function(){tp('<span class="tout">Flushing developer environment state…</span>');},350);
+    setTimeout(function(){tp('<span class="tok">✓ State written to /var/crosh/state.db</span>');},700);
+    var delay=3000+Math.random()*2500;
+    setTimeout(function(){
+      tp('<span class="tout">Switching to ChromeOS runtime. Session detached.</span>');
+      if(window.__CDS_setClosing)window.__CDS_setClosing();
+      setTimeout(function(){
+        if(window.__CDS_exitFS)window.__CDS_exitFS();
+        try{if(window.opener&&!window.opener.closed)window.opener.postMessage({type:'CHROMEOS_DONE'},'*');}catch(e){}
+        setTimeout(function(){window.close();},300);
+      },600);
+    },delay);
+  },
+  logs:function(args){
+    if(args&&args[0]==='stop'){
+      if(logsRunning){logsRunning=false;clearTimeout(logsTimer);tp('<span class="twrn">[logs] Stream stopped.</span>');}
+      else tp('<span class="tout">[logs] No active stream.</span>');
+      return;
+    }
+    if(logsRunning){tp('<span class="twrn">[logs] Already streaming. Type <span class="tok">logs stop</span> to halt.</span>');return;}
+    logsRunning=true;
+    tp('<span class="thl">[logs] Streaming system logs… <span class="tout">(type <span class="twrn">logs stop</span> to halt)</span></span>');
+    scheduleLog();
+  },
+  whoami:function(){tp('<span class="tout">'+esc(S.username)+'</span>');},
+  id:function(){tp('<span class="tout">uid=1000('+esc(S.username)+') gid=1000('+esc(S.username)+') groups=1000('+esc(S.username)+'),4(adm),27(sudo),46(plugdev)</span>');},
+  uname:function(a){
+    if(a.join(' ').indexOf('-a')!==-1)tp('<span class="tout">Linux '+SYS.hostname+' '+SYS.kernel+' #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux</span>');
+    else tp('<span class="tout">Linux</span>');
+  },
+  uptime:function(){
+    var h=Math.floor(sessionSec/3600),m=Math.floor((sessionSec%3600)/60);
+    tp('<span class="tout"> '+new Date().toLocaleTimeString()+' up <span class="tok">'+h+'h '+m+'m</span>,  1 user,  load: 0.34, 0.29, 0.22</span>');
+  },
+  ls:function(a){
+    if(a.indexOf('-la')!==-1||a.indexOf('-l')!==-1){
+      tp('<span class="tout">total 72</span>');
+      [['drwxr-xr-x','Documents'],['drwxr-xr-x','Downloads'],['drwxr-xr-x','Pictures'],['drwxr-xr-x','Projects'],
+       ['-rw-r--r--','.bashrc'],['-rw-r--r--','.profile'],['-rw-r--r--','README.md']
+      ].forEach(function(r){tp('<span class="tout">'+r[0]+' 2 '+S.username+' '+S.username+' 4096 '+new Date().toLocaleDateString()+' <span class="thl">'+r[1]+'</span></span>');});
+    }else{tp('<span class="thl">Documents/</span>  <span class="thl">Downloads/</span>  <span class="thl">Pictures/</span>  <span class="thl">Projects/</span>  .bashrc  .profile  README.md');}
+  },
+  pwd:function(){tp('<span class="tout">/home/'+esc(S.username)+'</span>');},
+  ps:function(){
+    tp('<span class="tinf">  PID TTY          TIME CMD</span>');
+    [['4001','pts/0','00:00:01','bash'],['4023','pts/0','00:00:00','ps'],['1042','pts/1','00:01:22','Xorg'],['2811','pts/2','00:04:07','chrome']
+    ].forEach(function(r){tp('<span class="tout"><span style="display:inline-block;width:6ch">'+r[0]+'</span> '+r[1]+'  '+r[2]+' <span class="tok">'+r[3]+'</span></span>');});
+  },
+  df:function(){
+    tp('<span class="tinf">Filesystem      Size  Used Avail Use% Mounted on</span>');
+    tp('<span class="tout">/dev/nvme0n1p3  238G   38G  188G  17% /</span>');
+    tp('<span class="tout">/dev/nvme0n1p1  511M   12M  499M   3% /boot/efi</span>');
+    tp('<span class="tout">tmpfs           7.8G  114M  7.7G   2% /run</span>');
+  },
+  free:function(){
+    tp('<span class="tinf">               total        used        free      shared  buff/cache   available</span>');
+    tp('<span class="tout">Mem:        16214780     5841920     6012300      341440     4360560     9730120</span>');
+    tp('<span class="tout">Swap:        2097148      131072     1966076</span>');
+  },
+  ifconfig:function(){
+    tp('<span class="thl tb">eth0</span><span class="tout">: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span>');
+    tp('<span class="tout">        inet <span class="tok">'+SYS.ip+'</span>  netmask 255.255.255.0  broadcast 192.168.1.255</span>');
+    tp('<span class="tout">        ether e4:5f:01:3a:bc:72  txqueuelen 1000  (Ethernet)</span>');
+    tp('<span class="tout">        RX: 612.4 MB   TX: 172.3 MB</span>');tp('');
+    tp('<span class="thl tb">lo</span><span class="tout">: flags=73&lt;UP,LOOPBACK,RUNNING&gt;  mtu 65536  inet 127.0.0.1</span>');
+  },
+  ping:function(a){
+    var h=a[0]||'8.8.8.8';
+    tp('<span class="tout">PING '+esc(h)+' 56(84) bytes of data.</span>');
+    for(var i=0;i<4;i++)(function(i){setTimeout(function(){tp('<span class="tout">64 bytes from '+esc(h)+': icmp_seq='+(i+1)+' ttl=55 time='+(Math.random()*12+3).toFixed(2)+' ms</span>');},i*300);})(i);
+    setTimeout(function(){tp('');tp('<span class="tout">4 packets transmitted, 4 received, 0% packet loss</span>');},1400);
+  },
+  echo:function(a){tp('<span class="tout">'+esc(a.join(' '))+'</span>');},
+  date:function(){tp('<span class="tout">'+new Date().toString()+'</span>');},
+  hostname:function(){tp('<span class="tout">'+SYS.hostname+'</span>');},
+  env:function(){
+    var v={USER:S.username,HOME:'/home/'+S.username,SHELL:S.shell||SYS.shell,TERM:'xterm-256color',LANG:'en_US.UTF-8',PATH:'/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',EDITOR:'nano',DISPLAY:':0',CROSH_DEV:'1'};
+    Object.keys(v).forEach(function(k){tp('<span class="thl">'+k+'</span>=<span class="tout">'+esc(v[k])+'</span>');});
+  },
+  history:function(){
+    if(!cmdHist.length){tp('<span class="tout">(no history)</span>');return;}
+    cmdHist.slice().reverse().forEach(function(c,i){tp('<span class="tout">  <span style="display:inline-block;width:4ch;color:var(--text-muted)">'+(i+1)+'</span>  '+esc(c)+'</span>');});
+  },
+  neofetch:function(){
+    var h=Math.floor(sessionSec/3600),m=Math.floor((sessionSec%3600)/60);
+    tp('<span class="thl2">       ▄▄▄▄▄</span>      <span class="tok tb">'+esc(S.username)+'@'+SYS.hostname+'</span>');
+    tp('<span class="thl2">      █     █</span>     <span class="tout">──────────────────────────</span>');
+    tp('<span class="thl2">     █ ▄▄▄ █</span>     <span class="tinf">OS:</span>       <span class="tout">'+SYS.os+'</span>');
+    tp('<span class="thl2">    █  ███  █</span>    <span class="tinf">Kernel:</span>   <span class="tout">'+SYS.kernel+'</span>');
+    tp('<span class="thl2">   █   ███   █</span>   <span class="tinf">Uptime:</span>   <span class="tout">'+h+'h '+m+'m</span>');
+    tp('<span class="thl2">  █  ███████ █</span>  <span class="tinf">Shell:</span>    <span class="tout">bash 5.2.21</span>');
+    tp('<span class="thl2"> █▀▀▀▀▀▀▀▀▀▀▀█</span> <span class="tinf">CPU:</span>      <span class="tout">'+SYS.cpu+'</span>');
+    tp('<span class="thl2">  ▀▀▀▀▀▀▀▀▀▀▀</span>  <span class="tinf">Memory:</span>   <span class="tout">'+SYS.ram+'</span>');tp('');
+    tp('<span style="background:var(--red);color:var(--red)">███</span><span style="background:var(--yellow);color:var(--yellow)">███</span><span style="background:var(--green);color:var(--green)">███</span><span style="background:var(--cyan);color:var(--cyan)">███</span><span style="background:var(--accent);color:var(--accent)">███</span><span style="background:var(--accent2);color:var(--accent2)">███</span>');
+  },
+  top:function(){
+    var n=new Date(),h=Math.floor(sessionSec/3600),m=Math.floor((sessionSec%3600)/60);
+    tp('<span class="tout">top - '+n.toLocaleTimeString()+' up '+h+'h '+m+'m,  1 user,  load: 0.34 0.29 0.22</span>');
+    tp('<span class="tout">Tasks: <span class="tok">148</span> total, <span class="twrn">1</span> running, <span class="tinf">147</span> sleeping</span>');
+    tp('<span class="tout">%Cpu: <span class="twrn">9.3</span> us, 1.8 sy, <span class="tok">87.8</span> id</span>');tp('');
+    tp('<span class="tinf">    PID USER      %CPU  %MEM  COMMAND</span>');
+    [['2811',S.username,'8.4','8.1','chrome'],['3390',S.username,'4.2','2.7','code-oss'],['1042','root','2.1','0.6','Xorg'],['4001',S.username,'0.1','0.0','bash']
+    ].forEach(function(r){tp('<span class="tout"><span style="width:7ch;display:inline-block">'+r[0]+'</span><span style="width:10ch;display:inline-block">'+r[1]+'</span><span style="width:6ch;display:inline-block;color:var(--yellow)">'+r[2]+'</span><span style="width:6ch;display:inline-block">'+r[3]+'</span><span class="tok">'+r[4]+'</span></span>');});
+  },
+  cat:function(a){
+    var f=a[0]||'';
+    var files={
+      '.bashrc':'# ~/.bashrc\nexport PATH="$HOME/.local/bin:$HOME/bin:$PATH"\nexport CROSH_DEV=1\nalias ll=\'ls -alF\'\nalias grep=\'grep --color=auto\'',
+      '.profile':'# ~/.profile\n[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"',
+      'README.md':'# CroshDeveloperSystem\nDeveloper shell environment.\nhttps://crosh.dev/docs'
+    };
+    if(files[f])files[f].split('\n').forEach(function(l){tp('<span class="tout">'+esc(l)+'</span>');});
+    else if(!f)tp('<span class="terr">cat: missing file operand</span>');
+    else tp('<span class="terr">cat: '+esc(f)+': No such file or directory</span>');
+  },
+  curl:function(a){
+    var url=a[0]||'localhost';
+    tp('<span class="tout">  % Total    % Received  Average Speed</span>');
+    tp('<span class="tok">100   512  100   512    0     0   9841      0</span>');
+    tp('<span class="tout">&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;'+esc(url)+'&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</span>');
+  },
+  sudo:function(a){
+    if(!a.length){tp('<span class="terr">sudo: no command specified</span>');return;}
+    tp('<span class="tout">[sudo] password for '+esc(S.username)+': </span>');
+    setTimeout(function(){
+      tp('<span class="tok">Authentication succeeded.</span>');
+      var sub=a[0].toLowerCase();
+      if(SUDO_CMDS[sub])SUDO_CMDS[sub](a.slice(1));
+      else if(CMDS[sub])CMDS[sub](a.slice(1));
+      else tp('<span class="terr">sudo: '+esc(a[0])+': command not found</span>');
+    },600);
+  },
+  lsblk:function(){
+    tp('<span class="tinf">NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS</span>');
+    tp('<span class="tout">nvme0n1     259:0    0 238.5G  0 disk</span>');
+    tp('<span class="tout">├─nvme0n1p1 259:1    0   512M  0 part /boot/efi</span>');
+    tp('<span class="tout">├─nvme0n1p2 259:2    0     4G  0 part [SWAP]</span>');
+    tp('<span class="tout">└─nvme0n1p3 259:3    0   234G  0 part /</span>');
+  },
+  dmesg:function(a){
+    if(a.indexOf('-c')!==-1){tp('<span class="tout">Kernel ring buffer cleared.</span>');return;}
+    ['[    0.000000] Booting Linux on physical CPU 0x0',
+     '[    0.000000] Linux version '+SYS.kernel,
+     '[    0.182341] ACPI: BIOS _OSI(Linux) query ignored',
+     '[    1.312200] input: AT Translated Set 2 keyboard as /devices/platform',
+     '[    2.048120] r8169 0000:03:00.0 eth0: Link is Up - 1000/Full',
+     '[    2.049001] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready'
+    ].forEach(function(l){tp('<span class="tout">'+l+'</span>');});
+  },
+};
+
+function runCommand(raw){
+  var t=raw.trim();if(!t)return;
+  cmdHist.unshift(t);histIdx=-1;
+  tpPrompt(t);
+  var parts=t.split(/\s+/),cmd=parts[0].toLowerCase(),args=parts.slice(1);
+  if(CMDS[cmd])CMDS[cmd](args);
+  else tp('<span class="terr">bash: '+esc(parts[0])+': command not found</span>');
+  TO.scrollTop=TO.scrollHeight;
+}
+
+TI.addEventListener('keydown',function(e){
+  if(e.key==='Enter'){var v=TI.value;TI.value='';runCommand(v);}
+  else if(e.key==='ArrowUp'){histIdx=Math.min(histIdx+1,cmdHist.length-1);TI.value=cmdHist[histIdx]||'';e.preventDefault();}
+  else if(e.key==='ArrowDown'){histIdx=Math.max(histIdx-1,-1);TI.value=histIdx>=0?cmdHist[histIdx]:'';e.preventDefault();}
+  else if(e.key==='Tab'){e.preventDefault();var v=TI.value.trim();var m=Object.keys(CMDS).find(function(c){return c.indexOf(v)===0;});if(m)TI.value=m;}
+});
+document.getElementById('terminal-win').addEventListener('click',function(){TI.focus();});
+    </script>
+</body>
+</html>
